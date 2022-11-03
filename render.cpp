@@ -2,10 +2,15 @@
 #include "RNBO.h"
 #include <string>
 #include <MiscUtilities.h>
+#include <algorithm>
 
-// whether to use analog ins to set parameters. Enabling this may mean preset loading
-// becomes useless, as values will be set automatically at every block
-static bool parametersFromAnalog = false;
+// A list of exposed parameters is printed when the program starts. Enter here
+// the indeces of those you want to control from analog ins.
+// The first n analog ins will be used to set these parameters. These values
+// are set at every block, which means that the default value or the value set
+// by a preset will be immediately overridden if the corresponding paramter is
+// controlled by analogIn
+static std::vector<unsigned int> parametersFromAnalog = {0, 1, 2};
 
 // has to be a pointer to ensure that it gets initialised after
 // initialisation for the static PlatformInterfaceStdLib platformInstance has already taken place
@@ -33,6 +38,24 @@ bool setup(BelaContext *context, void *userData)
 		return false;
 	}
 	rnbo = new RNBO::CoreObject;
+	printf("%d parameters available:\n", rnbo->getNumParameters());
+	for(unsigned int n = 0; n < rnbo->getNumParameters(); ++n)
+	{
+		bool controlled = false;
+		size_t i;
+		for(i = 0; i < parametersFromAnalog.size() && i < context->analogInChannels; ++i)
+		{
+			if(n == parametersFromAnalog[i])
+			{
+				controlled = true;
+				break;
+			}
+		}
+		printf("[%d] %s", n, rnbo->getParameterName(n));
+		if(controlled)
+		       printf(" - controlled by analog in %d", i);
+		printf("\n");
+	}
 	std::string presetFile = "presets.json";
 	printf("Loading presets from %s\n", presetFile.c_str());
 	std::string s = IoUtils::readTextFile(presetFile);
@@ -47,8 +70,6 @@ bool setup(BelaContext *context, void *userData)
 			RNBO::UniquePresetPtr preset = presetList->presetAtIndex(idx);
 			printf("Loading preset %d: %s\n", idx, presetList->presetNameAtIndex(idx).c_str());
 			rnbo->setPreset(std::move(preset));
-			if(parametersFromAnalog)
-				printf("Parameters are set from analog ins, so the values set by the preset may be entirely or partially overridden\n");
 		}
 	}
 	rnbo->prepareToProcess(context->audioSampleRate, context->audioFrames, true);
@@ -59,13 +80,13 @@ void render(BelaContext *context, void *userData)
 {
 	unsigned int nFrames = context->audioFrames;
 	unsigned int nParameters = 0;
-	if(parametersFromAnalog)
+	if(parametersFromAnalog.size())
 	{
 		nParameters = rnbo->getNumParameters();
-		if(nParameters > context->analogInChannels)
-			nParameters = context->analogInChannels;
+		nParameters = std::max(nParameters, context->analogInChannels);
+		nParameters = std::max(nParameters, parametersFromAnalog.size());
 		for(unsigned int c = 0; c < nParameters; ++c)
-			rnbo->setParameterValueNormalized(c, analogReadNI(context, 0, c));
+			rnbo->setParameterValueNormalized(parametersFromAnalog[c], analogReadNI(context, 0, c));
 	}
 
 	unsigned int maxInChannels = context->audioInChannels + context->analogInChannels - nParameters;
