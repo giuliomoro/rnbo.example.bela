@@ -65,7 +65,7 @@ void render(BelaContext *context, void *userData)
 		if(nParameters > context->analogInChannels)
 			nParameters = context->analogInChannels;
 		for(unsigned int c = 0; c < nParameters; ++c)
-			rnbo->setParameterValueNormalized(c, analogRead(context, 0, c));
+			rnbo->setParameterValueNormalized(c, analogReadNI(context, 0, c));
 	}
 
 	unsigned int maxInChannels = context->audioInChannels + context->analogInChannels - nParameters;
