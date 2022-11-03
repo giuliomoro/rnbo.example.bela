@@ -83,8 +83,8 @@ void render(BelaContext *context, void *userData)
 	if(parametersFromAnalog.size())
 	{
 		nParameters = rnbo->getNumParameters();
-		nParameters = std::max(nParameters, context->analogInChannels);
-		nParameters = std::max(nParameters, parametersFromAnalog.size());
+		nParameters = std::min(nParameters, context->analogInChannels);
+		nParameters = std::min(nParameters, parametersFromAnalog.size());
 		for(unsigned int c = 0; c < nParameters; ++c)
 			rnbo->setParameterValueNormalized(parametersFromAnalog[c], analogReadNI(context, 0, c));
 	}
