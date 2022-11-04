@@ -10,18 +10,37 @@
 // are set at every block, which means that the default value or the value set
 // by a preset will be immediately overridden if the corresponding paramter is
 // controlled by analogIn
-static std::vector<unsigned int> parametersFromAnalog = {0, 1, 2};
+static std::vector<unsigned int> parametersFromAnalog = {};
+// same but for mapping digital ins to parameters. These are only updated upon
+// change, so preset-loaded values are not necessarily overridden immediately
+static std::vector<unsigned int> parametersFromDigital = {};
 
 // has to be a pointer to ensure that it gets initialised after
 // initialisation for the static PlatformInterfaceStdLib platformInstance has already taken place
 static RNBO::CoreObject* rnbo;
 static RNBO::PresetList* presetList;
+static std::vector<bool> digitalParametersPast(parametersFromDigital.size());
 
 void Bela_userSettings(BelaInitSettings *settings)
 {
 	settings->uniformSampleRate = 1;
 	settings->interleave = 0;
 	settings->analogOutputsPersist = 0;
+}
+
+template <typename T>
+static ssize_t findIndex(const T value, std::vector<T> const& vals)
+{
+	ssize_t found = -1;
+	for(size_t i = 0; i < vals.size(); ++i)
+	{
+		if(value == vals[i])
+		{
+			found = i;
+			break;
+		}
+	}
+	return found;
 }
 
 bool setup(BelaContext *context, void *userData)
@@ -38,23 +57,23 @@ bool setup(BelaContext *context, void *userData)
 		return false;
 	}
 	rnbo = new RNBO::CoreObject;
+	parametersFromAnalog.resize(std::min(parametersFromAnalog.size(), context->analogInChannels));
+	parametersFromDigital.resize(std::min(parametersFromDigital.size(), context->digitalChannels));
 	printf("%d parameters available:\n", rnbo->getNumParameters());
 	for(unsigned int n = 0; n < rnbo->getNumParameters(); ++n)
 	{
-		bool controlled = false;
-		size_t i;
-		for(i = 0; i < parametersFromAnalog.size() && i < context->analogInChannels; ++i)
-		{
-			if(n == parametersFromAnalog[i])
-			{
-				controlled = true;
-				break;
-			}
-		}
 		printf("[%d] %s", n, rnbo->getParameterName(n));
-		if(controlled)
-		       printf(" - controlled by analog in %d", i);
+		ssize_t analog = findIndex(n, parametersFromAnalog);
+		ssize_t digital = findIndex(n, parametersFromDigital);
+		if(analog >= 0)
+			printf(" - controlled by analog in %d", analog);
+		if(digital >= 0) {
+			printf(" - controlled by digital in %d", digital);
+			pinMode(context, 0, digital, INPUT);
+		}
 		printf("\n");
+		if(analog >= 0 && digital >= 0)
+			fprintf(stderr, "Parameter %d controlled by both analog and digital in. Digital in ignored\n", digital);
 	}
 	std::string presetFile = "presets.json";
 	printf("Loading presets from %s\n", presetFile.c_str());
@@ -79,17 +98,21 @@ bool setup(BelaContext *context, void *userData)
 void render(BelaContext *context, void *userData)
 {
 	unsigned int nFrames = context->audioFrames;
-	unsigned int nParameters = 0;
-	if(parametersFromAnalog.size())
+	unsigned int nAnalogParameters = parametersFromAnalog.size();
+	for(unsigned int c = 0; c < nAnalogParameters; ++c)
+		rnbo->setParameterValueNormalized(parametersFromAnalog[c], analogReadNI(context, 0, c));
+	for(unsigned int c = 0; c < parametersFromDigital.size(); ++c)
 	{
-		nParameters = rnbo->getNumParameters();
-		nParameters = std::min(nParameters, context->analogInChannels);
-		nParameters = std::min(nParameters, parametersFromAnalog.size());
-		for(unsigned int c = 0; c < nParameters; ++c)
-			rnbo->setParameterValueNormalized(parametersFromAnalog[c], analogReadNI(context, 0, c));
+		bool value = digitalRead(context, 0, c);
+		// only send on change
+		if(value != digitalParametersPast[c])
+		{
+			rnbo->setParameterValueNormalized(parametersFromDigital[c], value);
+			digitalParametersPast[c] = value;
+		}
 	}
 
-	unsigned int maxInChannels = context->audioInChannels + context->analogInChannels - nParameters;
+	unsigned int maxInChannels = context->audioInChannels + context->analogInChannels - nAnalogParameters;
 	unsigned int nInChannels = rnbo->getNumInputChannels();
 	if(nInChannels > maxInChannels)
 		nInChannels = maxInChannels;
@@ -99,7 +122,7 @@ void render(BelaContext *context, void *userData)
 		if(c < context->audioInChannels)
 			inputs[c] = (float*)(context->audioIn + c * nFrames);
 		else
-			inputs[c] = (float*)(context->analogIn + (c - nParameters - context->audioInChannels) * nFrames);
+			inputs[c] = (float*)(context->analogIn + (c - nAnalogParameters - context->audioInChannels) * nFrames);
 	}
 
 	unsigned int maxOutChannels = context->audioOutChannels + context->analogOutChannels;
