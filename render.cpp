@@ -14,6 +14,8 @@ static std::vector<unsigned int> parametersFromAnalog = {};
 // same but for mapping digital ins to parameters. These are only updated upon
 // change, so preset-loaded values are not necessarily overridden immediately
 static std::vector<unsigned int> parametersFromDigital = {};
+// whether to show hidden parameters when printing the parameters list
+bool showHiddenParameters = false;
 
 // has to be a pointer to ensure that it gets initialised after
 // initialisation for the static PlatformInterfaceStdLib platformInstance has already taken place
@@ -59,9 +61,17 @@ bool setup(BelaContext *context, void *userData)
 	rnbo = new RNBO::CoreObject;
 	parametersFromAnalog.resize(std::min(parametersFromAnalog.size(), context->analogInChannels));
 	parametersFromDigital.resize(std::min(parametersFromDigital.size(), context->digitalChannels));
-	printf("%d parameters available:\n", rnbo->getNumParameters());
+	unsigned int hiddenParameters = 0;
+	printf("Available parameters: %u\n", rnbo->getNumParameters());
 	for(unsigned int n = 0; n < rnbo->getNumParameters(); ++n)
 	{
+		RNBO::ParameterInfo info;
+		rnbo->getParameterInfo(n, &info);
+		if((!info.visible || info.debug) && !showHiddenParameters)
+		{
+			hiddenParameters++;
+			continue;
+		}
 		printf("[%d] %s", n, rnbo->getParameterName(n));
 		ssize_t analog = findIndex(n, parametersFromAnalog);
 		ssize_t digital = findIndex(n, parametersFromDigital);
@@ -75,6 +85,8 @@ bool setup(BelaContext *context, void *userData)
 		if(analog >= 0 && digital >= 0)
 			fprintf(stderr, "Parameter %d controlled by both analog and digital in. Digital in ignored\n", digital);
 	}
+	if(hiddenParameters)
+		printf("+ %d hidden parameters\n", hiddenParameters);
 	std::string presetFile = "presets.json";
 	printf("Loading presets from %s\n", presetFile.c_str());
 	std::string s = IoUtils::readTextFile(presetFile);
