@@ -4,6 +4,8 @@
 #include <MiscUtilities.h>
 #include <algorithm>
 
+static const unsigned int kNoParam = -1; // use this below if you want to skip a channel
+
 // A list of exposed parameters is printed when the program starts. Enter here
 // the indeces of those you want to control from analog ins.
 // The first n analog ins will be used to set these parameters. These values
