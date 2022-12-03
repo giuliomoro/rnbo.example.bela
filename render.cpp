@@ -4,6 +4,11 @@
 #include <MiscUtilities.h>
 #include <algorithm>
 
+//#define BELA_RNBO_USE_TRILL // uncomment to use Trill
+#ifdef BELA_RNBO_USE_TRILL
+#include <libraries/Trill/Trill.h>
+#endif // BELA_RNBO_USE_TRILL
+
 static const unsigned int kNoParam = -1; // use this below if you want to skip a channel
 
 // A list of exposed parameters is printed when the program starts. Enter here
@@ -16,6 +21,19 @@ static std::vector<unsigned int> parametersFromAnalog = {};
 // same but for mapping digital ins to parameters. These are only updated upon
 // change, so preset-loaded values are not necessarily overridden immediately
 static std::vector<unsigned int> parametersFromDigital = {};
+#ifdef BELA_RNBO_USE_TRILL
+// same but for mapping Trill location to parameters.
+static std::vector<unsigned int> parametersFromTrillLocation = {};
+// same but for mapping Trill size to parameters.
+static std::vector<unsigned int> parametersFromTrillSize = {};
+static std::vector<Trill*> trills {
+	// add/edit more Trills here
+	new Trill(1, Trill::BAR),
+};
+static std::vector<float> trillLocationParametersPast(parametersFromTrillLocation.size());
+static std::vector<float> trillSizeParametersPast(parametersFromTrillSize.size());
+#endif // BELA_RNBO_USE_TRILL
+
 // whether to show hidden parameters when printing the parameters list
 bool showHiddenParameters = false;
 
@@ -47,8 +65,23 @@ static ssize_t findIndex(const T value, std::vector<T> const& vals)
 	return found;
 }
 
+#ifdef BELA_RNBO_USE_TRILL
+static void loop(void*)
+{
+	while(!Bela_stopRequested())
+	{
+		for(auto& t : trills)
+			t->readI2C();
+		usleep(5000);
+	}
+}
+#endif // BELA_RNBO_USE_TRILL
+
 bool setup(BelaContext *context, void *userData)
 {
+#ifdef BELA_RNBO_USE_TRILL
+	Bela_runAuxiliaryTask(loop);
+#endif // BELA_RNBO_USE_TRILL
 	// verify settings have been applied
 	if(context->flags & BELA_FLAG_INTERLEAVED)
 	{
@@ -63,6 +96,10 @@ bool setup(BelaContext *context, void *userData)
 	rnbo = new RNBO::CoreObject;
 	parametersFromAnalog.resize(std::min(parametersFromAnalog.size(), context->analogInChannels));
 	parametersFromDigital.resize(std::min(parametersFromDigital.size(), context->digitalChannels));
+#ifdef BELA_RNBO_USE_TRILL
+	parametersFromTrillLocation.resize(std::min(parametersFromTrillLocation.size(), trills.size()));
+	parametersFromTrillSize.resize(std::min(parametersFromTrillSize.size(), trills.size()));
+#endif // BELA_RNBO_USE_TRILL
 	unsigned int hiddenParameters = 0;
 	printf("Available parameters: %u\n", rnbo->getNumParameters());
 	for(unsigned int n = 0; n < rnbo->getNumParameters(); ++n)
@@ -77,12 +114,22 @@ bool setup(BelaContext *context, void *userData)
 		printf("[%d] %s", n, rnbo->getParameterName(n));
 		ssize_t analog = findIndex(n, parametersFromAnalog);
 		ssize_t digital = findIndex(n, parametersFromDigital);
+#ifdef BELA_RNBO_USE_TRILL
+		ssize_t trillLocation = findIndex(n, parametersFromTrillLocation);
+		ssize_t trillSize = findIndex(n, parametersFromTrillSize);
+#endif // BELA_RNBO_USE_TRILL
 		if(analog >= 0)
 			printf(" - controlled by analog in %d", analog);
 		if(digital >= 0) {
 			printf(" - controlled by digital in %d", digital);
 			pinMode(context, 0, digital, INPUT);
 		}
+#ifdef BELA_RNBO_USE_TRILL
+		if(trillLocation >= 0)
+			printf(" - controlled by Trill location %d", trillLocation);
+		if(trillSize >= 0)
+			printf(" - controlled by Trill size %d", trillSize);
+#endif // BELA_RNBO_USE_TRILL
 		printf("\n");
 		if(analog >= 0 && digital >= 0)
 			fprintf(stderr, "Parameter %d controlled by both analog and digital in. Digital in ignored\n", digital);
@@ -131,6 +178,10 @@ void render(BelaContext *context, void *userData)
 	for(unsigned int c = 0; c < nAnalogParameters; ++c)
 		rnbo->setParameterValueNormalized(parametersFromAnalog[c], analogReadNI(context, 0, c));
 	sendOnChange(digitalParametersPast, parametersFromDigital, [context](unsigned int c) -> float { return digitalRead(context, 0, c); });
+#ifdef BELA_RNBO_USE_TRILL
+	sendOnChange(trillLocationParametersPast, parametersFromTrillLocation, [](unsigned int c) { return trills[c]->compoundTouchLocation(); });
+	sendOnChange(trillSizeParametersPast, parametersFromTrillSize, [](unsigned int c) { return trills[c]->compoundTouchSize(); });
+#endif // BELA_RNBO_USE_TRILL
 
 	unsigned int maxInChannels = context->audioInChannels + context->analogInChannels - nAnalogParameters;
 	unsigned int nInChannels = rnbo->getNumInputChannels();
@@ -162,6 +213,10 @@ void render(BelaContext *context, void *userData)
 
 void cleanup(BelaContext *context, void *userData)
 {
+#ifdef BELA_RNBO_USE_TRILL
+	for(auto& p : trills)
+		delete p;
+#endif // BELA_RNBO_USE_TRILL
 	delete presetList;
 	delete rnbo;
 }
