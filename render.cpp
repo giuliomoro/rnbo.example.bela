@@ -109,22 +109,28 @@ bool setup(BelaContext *context, void *userData)
 	return true;
 }
 
+template <typename T, typename F>
+static void sendOnChange(std::vector<T>& past, std::vector<unsigned int>& parameters, F func)
+{
+	for(unsigned int c = 0; c < parameters.size(); ++c)
+	{
+		float value = func(c);
+		// only send on change
+		if(value != past[c])
+		{
+			rnbo->setParameterValueNormalized(parameters[c], value);
+			past[c] = value;
+		}
+	}
+}
+
 void render(BelaContext *context, void *userData)
 {
 	unsigned int nFrames = context->audioFrames;
 	unsigned int nAnalogParameters = parametersFromAnalog.size();
 	for(unsigned int c = 0; c < nAnalogParameters; ++c)
 		rnbo->setParameterValueNormalized(parametersFromAnalog[c], analogReadNI(context, 0, c));
-	for(unsigned int c = 0; c < parametersFromDigital.size(); ++c)
-	{
-		bool value = digitalRead(context, 0, c);
-		// only send on change
-		if(value != digitalParametersPast[c])
-		{
-			rnbo->setParameterValueNormalized(parametersFromDigital[c], value);
-			digitalParametersPast[c] = value;
-		}
-	}
+	sendOnChange(digitalParametersPast, parametersFromDigital, [context](unsigned int c) -> float { return digitalRead(context, 0, c); });
 
 	unsigned int maxInChannels = context->audioInChannels + context->analogInChannels - nAnalogParameters;
 	unsigned int nInChannels = rnbo->getNumInputChannels();
