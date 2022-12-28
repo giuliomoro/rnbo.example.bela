@@ -112,6 +112,12 @@ namespace RNBO {
 	 */
 	using Int = intptr_t;
 
+#ifdef RNBO_USE_FLOAT32
+	using UInt = uint32_t;
+#else
+	using UInt = uint64_t;
+#endif
+
 	const Index INVALID_INDEX = SIZE_MAX;
 
 	/**

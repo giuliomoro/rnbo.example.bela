@@ -6,7 +6,6 @@
 //
 
 #include "RNBO_DataRefList.h"
-#include "common/RNBO_Std.h"
 
 #ifndef RNBO_NOSTDLIB
 
@@ -47,16 +46,19 @@ size_t DataRefList::size()
 
 std::string DataRefList::datarefIdAtIndex(size_t index)
 {
+	if (index > this->size()) return "";
     return _ids[index];
 }
 
 std::string DataRefList::datarefLocationAtIndex(size_t index)
 {
+	if (index > this->size()) return "";
     return _locations[index];
 }
 
 DataRefType DataRefList::datarefTypeAtIndex(size_t index)
 {
+	if (index > this->size()) return DataRefType::File;
 	return _types[index];
 }
 

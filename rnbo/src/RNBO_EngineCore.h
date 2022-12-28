@@ -19,6 +19,7 @@
 #include "RNBO_PatcherEventSender.h"
 #include "RNBO_Utils.h"
 #include "RNBO_StartupEvent.h"
+#include "RNBO_ParamNameHash.h"
 
 namespace RNBO {
 
@@ -400,6 +401,8 @@ namespace RNBO {
 			_patcher->initialize(emptyState);
 			scheduleEvent(StartupEvent(_currentTime, StartupEvent::End));
 
+			_paramNameHash.update(_patcher.get());
+
 			if (_patcherChangedHandler) {
 				_patcherChangedHandler->patcherChanged();
 			}
@@ -476,8 +479,8 @@ namespace RNBO {
 		}
 
 		// ProbingInterface
-		ParameterIndex getParameterIndexForID(const char *paramid) const override {
-			return _patcher->getParameterIndexForID(paramid);
+		ParameterIndex getParameterIndexForID(const char *paramid) const {
+			return _paramNameHash.get(paramid);
 		}
 
 		Index getProbingChannels(MessageTag outletId) const override {
@@ -679,6 +682,7 @@ namespace RNBO {
 #endif
 
 		PatcherChangedHandler*			_patcherChangedHandler = nullptr;
+		ParamNameHash					_paramNameHash;
 
 	private:
 

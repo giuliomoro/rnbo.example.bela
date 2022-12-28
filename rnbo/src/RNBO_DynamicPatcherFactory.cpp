@@ -137,11 +137,6 @@ namespace RNBO {
 			_wrappedObject->dump();
 		}
 
-		ParameterIndex getParameterIndexForID(ConstCharPointer paramid) const override
-		{
-			return _wrappedObject->getParameterIndexForID(paramid);
-		}
-
 		Index getProbingChannels(MessageTag outletId) const override {
 			return _wrappedObject->getProbingChannels(outletId);
 		}

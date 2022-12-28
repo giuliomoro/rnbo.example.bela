@@ -147,9 +147,6 @@ ParameterIndex CoreObject::getNumParameters() const
 				 Index sampleFrames,
 				 const MidiEventList* midiInput, MidiEventList* midiOutput)
 	{
-		// no in-place audio processing
-		RNBO_ASSERT((audioInputs == nullptr || audioOutputs == nullptr ) || audioInputs != audioOutputs);
-
 		_engine->process(audioInputs, numInputs,
 			audioOutputs, numOutputs,
 			sampleFrames,

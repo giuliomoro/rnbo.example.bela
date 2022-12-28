@@ -122,10 +122,6 @@ namespace RNBO {
 			return 2;
 		}
 
-		ParameterIndex getParameterIndexForID(ConstCharPointer /* paramid */) const override {
-			return INVALID_INDEX;
-		}
-
 		Index getProbingChannels(MessageTag outletId) const override {
 			RNBO_UNUSED(outletId);
 			return 0;

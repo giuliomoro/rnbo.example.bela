@@ -43,7 +43,15 @@ namespace RNBO {
 			_midiData[2] = uint8_t(b3);
 			// let length based on the status
 			int status = b1 & 0xF0;
-			_length = (status == 0xC0 || status == 0xD0) ? 2 : 3;
+			if (status == 0xC0 || status == 0xD0 || b1 == 0xF1 || b1 == 0xF3) {
+				//prog change, channel pressure, quarter frame, song select
+				_length = 2;
+			} else if ((b1 >= 0xF8 && b1 <= 0xFF) || b1 == 0xF6) {
+				//realtime, tune request
+				_length = 1;
+			} else {
+				_length = 3;
+			}
 		}
 
 

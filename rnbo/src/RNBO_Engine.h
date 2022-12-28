@@ -335,7 +335,7 @@ namespace RNBO {
 			RNBO_UNUSED(value);
 		}
 
-		Index getParameterIndexForID(ConstCharPointer /* paramid */) const override { return INVALID_INDEX; }
+		Index getParameterIndexForID(ConstCharPointer /* paramid */) const { return INVALID_INDEX; }
 
 		EngineInterface* engineInterface;
 		MillisecondTime currentTime;

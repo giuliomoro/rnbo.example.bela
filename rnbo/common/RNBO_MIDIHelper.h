@@ -36,6 +36,25 @@ namespace RNBO {
 		MIDI_CC_TimbreMSB = 74,
 		MIDI_CC_TimbreLSB = 106,
 
+		MIDI_SysexStart = 0xF0,
+
+		//system common
+		MIDI_QuarterFrame = 0xF1,
+		MIDI_SongPos = 0xF2,
+		MIDI_SongSel = 0xF3,
+		MIDI_TuneRequest = 0xF6,
+
+		MIDI_SysexEnd = 0xF7,
+
+		//system realtime
+		MIDI_Clock = 0xF8,
+		MIDI_Start = 0xFA,
+		MIDI_Continue = 0xFB,
+		MIDI_Stop = 0xFC,
+		MIDI_ActiveSense = 0xFE,
+		MIDI_Reset = 0xFF,
+
+
 		MIDI_NoteState_Off = 0,
 		MIDI_NoteState_On = 1,
 		MIDI_NoteState_Sustained = 2
@@ -66,6 +85,8 @@ namespace RNBO {
 		{
 			if (command == MIDI_ProgramChangeMask) return MIDI_ProgramChange;
 			if (command == MIDI_ChannelPressureMask) return MIDI_ChannelPressure;
+			if (statusbyte == MIDI_QuarterFrame) return MIDI_QuarterFrame;
+			if (statusbyte == MIDI_SongSel) return MIDI_SongSel;
 			return MIDI_SecondByteReceived;
 		}
 		else if (currentStatus == MIDI_SecondByteReceived) {
@@ -74,6 +95,7 @@ namespace RNBO {
 			if (command == MIDI_AfterTouchMask) return MIDI_Aftertouch;
 			if (command == MIDI_CCMask) return MIDI_CC;
 			if (command == MIDI_PitchBendMask) return MIDI_PitchBend;
+			if (statusbyte == MIDI_SongPos) return MIDI_SongPos;
 			// probably shouldn't get here
 			return MIDI_Generic;
 		}

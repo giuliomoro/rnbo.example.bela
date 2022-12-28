@@ -321,17 +321,31 @@ namespace RNBO {
 		 * beginning of the list
 		 * @param args items to add to the list
 		 */
-		template<typename... Ts> void splice(size_t start, size_t deleteCount, Ts ... args)
+		template<typename... Ts> listbase<T> splice(Int start, size_t deleteCount, Ts ... args)
 		{
-			if (start + deleteCount > length) deleteCount = length - start;
+			if (start < 0) start += length;
+			if (start < 0) start = 0;
+			size_t iStart = (size_t)start;
+			if (iStart >= length) {
+				deleteCount = 0;
+				iStart = length;
+			}
+
+			if (iStart + deleteCount > length) deleteCount = length - iStart;
 
 			const size_t addLength = sizeof...(args);
 			const long diff = (long)(addLength - deleteCount);
 
+			listbase<T> deletedItems;
+			deletedItems.allocate(deleteCount, false);
+			for (size_t i = 0; i < deleteCount; i++) {
+				deletedItems.push(_values[iStart + i]);
+			}
+
 			long newLength = (long)(length) + diff;
 			if (newLength <= 0) {
 				length = 0;
-				return;
+				return deletedItems;
 			}
 
 			allocate(static_cast<size_t>(newLength), true);
@@ -353,6 +367,8 @@ namespace RNBO {
 			}
 
 			length = static_cast<size_t>(newLength);
+
+			return deletedItems;
 		}
 
 		/**

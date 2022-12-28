@@ -559,7 +559,7 @@ namespace RNBO {
 		 * @param paramid the parameter ID
 		 * @return the parameter index
 		 */
-		ParameterIndex getParameterIndexForID(ConstCharPointer paramid) const override;
+		ParameterIndex getParameterIndexForID(ConstCharPointer paramid) const;
 
 		/**
 		 * @brief Get the number of probing channels associated with an outlet

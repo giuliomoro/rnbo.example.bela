@@ -25,6 +25,7 @@ namespace RNBO {
 
     UniquePresetPtr PresetList::presetAtIndex(size_t index)
     {
+		if (index > this->size()) return nullptr;
         UniquePresetPtr preset = make_unique<Preset>();
         PresetPtr srcPreset = _parsedPresets[index]->preset;
         copyPreset(*srcPreset, *preset);
@@ -33,6 +34,7 @@ namespace RNBO {
 
     std::string PresetList::presetNameAtIndex(size_t index)
     {
+		if (index > this->size()) return "";
         std::string name = _parsedPresets[index]->name;
         return name;
     }

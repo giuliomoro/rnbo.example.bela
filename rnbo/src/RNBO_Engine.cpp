@@ -161,6 +161,7 @@ namespace RNBO {
 		_patcher->initialize(state);
 		scheduleEvent(StartupEvent(_currentTime, StartupEvent::End));
 
+		_paramNameHash.update(_patcher.get());
 		updateExternalDataRefs();
 		_currentEvents.clear();
 

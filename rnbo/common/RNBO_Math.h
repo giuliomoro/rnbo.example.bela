@@ -50,6 +50,16 @@ namespace RNBO_Math {
 #endif
 	}
 
+	template <typename T>
+	inline int rnbo_isfinite(T x) {
+	#ifdef RNBO_NOSTDLIB
+		const bool isinf = !rnbo_isnan<T>(x) && rnbo_isnan<T>(x - x);
+		return !isinf;
+	#else
+		return std::isfinite(x);
+	#endif
+	}
+
 	inline int rnbo_isnan(int x) {
 		return false;
 	}
@@ -147,7 +157,7 @@ namespace RNBO_Math {
 		}
 	}
 
-	template <typename T> inline long rnbo_trunc(T x)  { return (long)x; }
+	template <typename T> inline RNBO::Int rnbo_trunc(T x)  { return (RNBO::Int)x; }
 
 	template <typename T> inline RNBO::number rnbo_log2(T x) { return ::log2(x); }
 	template <> inline RNBO::number rnbo_log2<float>(float x) { return ::log2f(x); }
