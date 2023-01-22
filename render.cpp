@@ -165,8 +165,11 @@ static void sendOnChange(std::vector<T>& past, std::vector<unsigned int>& parame
 		// only send on change
 		if(value != past[c])
 		{
-			rnbo->setParameterValueNormalized(parameters[c], value);
-			past[c] = value;
+			if(kNoParam != parameters[c])
+			{
+				rnbo->setParameterValueNormalized(parameters[c], value);
+				past[c] = value;
+			}
 		}
 	}
 }
@@ -176,7 +179,10 @@ void render(BelaContext *context, void *userData)
 	unsigned int nFrames = context->audioFrames;
 	unsigned int nAnalogParameters = parametersFromAnalog.size();
 	for(unsigned int c = 0; c < nAnalogParameters; ++c)
-		rnbo->setParameterValueNormalized(parametersFromAnalog[c], analogReadNI(context, 0, c));
+	{
+		if(kNoParam != parametersFromAnalog[c])
+			rnbo->setParameterValueNormalized(parametersFromAnalog[c], analogReadNI(context, 0, c));
+	}
 	sendOnChange(digitalParametersPast, parametersFromDigital, [](unsigned int c, BelaContext* context ) -> float { return digitalRead(context, 0, c); }, context);
 #ifdef BELA_RNBO_USE_TRILL
 	sendOnChange(trillLocationParametersPast, parametersFromTrillLocation, [](unsigned int c, void*) { return trills[c]->compoundTouchLocation(); });
