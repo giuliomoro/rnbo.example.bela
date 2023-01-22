@@ -142,7 +142,7 @@ bool setup(BelaContext *context, void *userData)
 			fprintf(stderr, "Parameter %d controlled by both analog and digital in. Digital in ignored\n", n);
 	}
 	if(hiddenParameters)
-		printf("+ %d hidden parameters\n", hiddenParameters);
+		printf("(%d hidden parameters)\n", hiddenParameters);
 	std::string presetFile = "presets.json";
 	printf("Loading presets from %s\n", presetFile.c_str());
 	std::string s = IoUtils::readTextFile(presetFile);
