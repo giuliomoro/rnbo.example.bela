@@ -21,6 +21,8 @@ static std::vector<unsigned int> parametersFromAnalog = {};
 // same but for mapping digital ins to parameters. These are only updated upon
 // change, so preset-loaded values are not necessarily overridden immediately
 static std::vector<unsigned int> parametersFromDigital = {};
+// mapping parameters to digital out, e.g.: to display a toggle state with an LED
+static std::vector<unsigned int> parametersToDigital = {};
 #ifdef BELA_RNBO_USE_TRILL
 // same but for mapping Trill location to parameters.
 static std::vector<unsigned int> parametersFromTrillLocation = {};
@@ -114,6 +116,7 @@ bool setup(BelaContext *context, void *userData)
 		printf("[%d] %s", n, rnbo->getParameterName(n));
 		ssize_t analog = findIndex(n, parametersFromAnalog);
 		ssize_t digitalIn = findIndex(n, parametersFromDigital);
+		ssize_t digitalOut = findIndex(n, parametersToDigital);
 #ifdef BELA_RNBO_USE_TRILL
 		ssize_t trillLocation = findIndex(n, parametersFromTrillLocation);
 		ssize_t trillSize = findIndex(n, parametersFromTrillSize);
@@ -123,6 +126,10 @@ bool setup(BelaContext *context, void *userData)
 		if(digitalIn >= 0) {
 			printf(" - controlled by digital in %d", digitalIn);
 			pinMode(context, 0, digitalIn, INPUT);
+		}
+		if(digitalOut >= 0) {
+			printf(" - controlling digital out %d", digitalOut);
+			pinMode(context, 0, digitalOut, OUTPUT);
 		}
 #ifdef BELA_RNBO_USE_TRILL
 		if(trillLocation >= 0)
@@ -184,6 +191,11 @@ void render(BelaContext *context, void *userData)
 			rnbo->setParameterValueNormalized(parametersFromAnalog[c], analogReadNI(context, 0, c));
 	}
 	sendOnChange(digitalParametersPast, parametersFromDigital, [](unsigned int c, BelaContext* context ) -> float { return digitalRead(context, 0, c); }, context);
+	for(unsigned int c = 0; c < parametersToDigital.size(); ++c)
+	{
+		if(kNoParam != parametersToDigital[c])
+			digitalWrite(context, 0, c, rnbo->getParameterValue(parametersToDigital[c]) > 0.5f);
+	}
 #ifdef BELA_RNBO_USE_TRILL
 	sendOnChange(trillLocationParametersPast, parametersFromTrillLocation, [](unsigned int c, void*) { return trills[c]->compoundTouchLocation(); });
 	sendOnChange(trillSizeParametersPast, parametersFromTrillSize, [](unsigned int c, void*) { return trills[c]->compoundTouchSize(); });
