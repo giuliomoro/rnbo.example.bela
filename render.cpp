@@ -113,16 +113,16 @@ bool setup(BelaContext *context, void *userData)
 		}
 		printf("[%d] %s", n, rnbo->getParameterName(n));
 		ssize_t analog = findIndex(n, parametersFromAnalog);
-		ssize_t digital = findIndex(n, parametersFromDigital);
+		ssize_t digitalIn = findIndex(n, parametersFromDigital);
 #ifdef BELA_RNBO_USE_TRILL
 		ssize_t trillLocation = findIndex(n, parametersFromTrillLocation);
 		ssize_t trillSize = findIndex(n, parametersFromTrillSize);
 #endif // BELA_RNBO_USE_TRILL
 		if(analog >= 0)
 			printf(" - controlled by analog in %d", analog);
-		if(digital >= 0) {
-			printf(" - controlled by digital in %d", digital);
-			pinMode(context, 0, digital, INPUT);
+		if(digitalIn >= 0) {
+			printf(" - controlled by digital in %d", digitalIn);
+			pinMode(context, 0, digitalIn, INPUT);
 		}
 #ifdef BELA_RNBO_USE_TRILL
 		if(trillLocation >= 0)
@@ -131,7 +131,7 @@ bool setup(BelaContext *context, void *userData)
 			printf(" - controlled by Trill size %d", trillSize);
 #endif // BELA_RNBO_USE_TRILL
 		printf("\n");
-		if(analog >= 0 && digital >= 0)
+		if(analog >= 0 && digitalIn >= 0)
 			fprintf(stderr, "Parameter %d controlled by both analog and digital in. Digital in ignored\n", n);
 	}
 	if(hiddenParameters)
