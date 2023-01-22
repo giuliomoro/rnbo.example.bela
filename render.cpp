@@ -132,7 +132,7 @@ bool setup(BelaContext *context, void *userData)
 #endif // BELA_RNBO_USE_TRILL
 		printf("\n");
 		if(analog >= 0 && digital >= 0)
-			fprintf(stderr, "Parameter %d controlled by both analog and digital in. Digital in ignored\n", digital);
+			fprintf(stderr, "Parameter %d controlled by both analog and digital in. Digital in ignored\n", n);
 	}
 	if(hiddenParameters)
 		printf("+ %d hidden parameters\n", hiddenParameters);
