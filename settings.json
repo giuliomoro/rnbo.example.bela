@@ -1,5 +1,5 @@
 {
-  "fileName": "rnbo_source.cpp",
+  "fileName": "render.cpp",
   "CLArgs": {
     "-p": "16",
     "-C": "8",
