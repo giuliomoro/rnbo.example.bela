@@ -19,7 +19,7 @@ VERSION=$MAJOR.$MINOR.$PATCH
 echo $VERSION
 rm -rf rnbo
 cp -r $RNBO_EXPORT/rnbo ./
-rm -rf rnbo/RNBO.cpp rnbo/*.json rnbo/adapters rnbo/src/platforms/nostdlib rnbo/test
+rm -rf rnbo/RNBO.cpp rnbo/*.json rnbo/adapters rnbo/src/platforms/nostdlib rnbo/test rnbo/cmake
 git add rnbo
 git commit -m "====Updating rnbo to $VERSION - first step: copy updated rnbo folder" -a
 git apply -3 --whitespace=fix <(git diff 79be4ed..ea9bc8a rnbo)
