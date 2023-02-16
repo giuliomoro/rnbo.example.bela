@@ -163,7 +163,7 @@ bool setup(BelaContext *context, void *userData)
 	return true;
 }
 
-template <typename T, typename F, typename A>
+template <typename T, typename F, typename A = void*>
 static void sendOnChange(std::vector<T>& past, std::vector<unsigned int>& parameters, F func, A arg = (void*)nullptr)
 {
 	for(unsigned int c = 0; c < parameters.size(); ++c)
@@ -197,8 +197,8 @@ void render(BelaContext *context, void *userData)
 			digitalWrite(context, 0, c, rnbo->getParameterValue(parametersToDigital[c]) > 0.5f);
 	}
 #ifdef BELA_RNBO_USE_TRILL
-	sendOnChange(trillLocationParametersPast, parametersFromTrillLocation, [](unsigned int c, void*) { return trills[c]->compoundTouchLocation(); });
-	sendOnChange(trillSizeParametersPast, parametersFromTrillSize, [](unsigned int c, void*) { return trills[c]->compoundTouchSize(); });
+	sendOnChange(trillLocationParametersPast, parametersFromTrillLocation, [](unsigned int c, void*) -> float { return trills[c]->compoundTouchLocation(); });
+	sendOnChange(trillSizeParametersPast, parametersFromTrillSize, [](unsigned int c, void*) -> float { return trills[c]->compoundTouchSize(); });
 #endif // BELA_RNBO_USE_TRILL
 
 	unsigned int maxInChannels = context->audioInChannels + context->analogInChannels - nAnalogParameters;
