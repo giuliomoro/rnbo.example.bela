@@ -11,7 +11,6 @@
 #include "RNBO_EventVariant.h"
 #include "RNBO_EventList.h"
 #include "RNBO_ParameterEventInterface.h"
-#include "src/RNBO_Engine.h"
 
 namespace RNBO {
 

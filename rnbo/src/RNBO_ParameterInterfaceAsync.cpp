@@ -1,6 +1,5 @@
 #include "RNBO.h"
 #include "RNBO_ParameterInterfaceAsyncImpl.h"
-#include "src/RNBO_Engine.h"
 
 namespace RNBO {
 
