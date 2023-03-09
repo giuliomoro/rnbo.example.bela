@@ -5,6 +5,10 @@
 #include <algorithm>
 
 //#define BELA_RNBO_USE_TRILL // uncomment to use Trill
+//#define BELA_RNBO_LOAD_DEPENDENCIES // uncomment to load dependencies such as audio files
+
+// The code for BELA_RNBO_LOAD_DEPENDENCIES follows closely the example [here](https://rnbo.cycling74.com/learn/loading-file-dependencies)
+
 #ifdef BELA_RNBO_USE_TRILL
 #include <libraries/Trill/Trill.h>
 #endif // BELA_RNBO_USE_TRILL
@@ -79,6 +83,20 @@ static void loop(void*)
 }
 #endif // BELA_RNBO_USE_TRILL
 
+#ifdef BELA_RNBO_LOAD_DEPENDENCIES
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <libraries/sndfile/sndfile.h>
+
+// since we used malloc to allocate our buffer, we pass a callback that uses
+// free to release buffer memory when RNBO is done with it.
+static void freeBuffer(RNBO::ExternalDataId id, char *data) {
+	std::cout << "--- Freed" << "\n";
+	free(data);
+}
+#endif // BELA_RNBO_LOAD_DEPENDENCIES
+
 bool setup(BelaContext *context, void *userData)
 {
 #ifdef BELA_RNBO_USE_TRILL
@@ -96,6 +114,65 @@ bool setup(BelaContext *context, void *userData)
 		return false;
 	}
 	rnbo = new RNBO::CoreObject;
+#ifdef BELA_RNBO_LOAD_DEPENDENCIES
+	// Read in the dependencies.json file as a std::string
+	const std::string dependenciesJson("dependencies.json");
+	std::ifstream t(dependenciesJson);
+	std::stringstream buffer;
+	buffer << t.rdbuf();
+
+	// Parse dependencies into a RNBO DataRefList
+	try {
+		RNBO::DataRefList list(buffer.str());
+
+		// Loop and load
+		for (int i = 0; i < list.size(); i++) {
+			// Get parsed info about this data reference
+			std::string idstr = list.datarefIdAtIndex(i);
+			RNBO::DataRefType type = list.datarefTypeAtIndex(i);
+			std::string location = list.datarefLocationAtIndex(i);
+
+			// The type can be either URL or File
+			if (type == RNBO::DataRefType::File) {
+				std::cout << "buffer id: " << idstr << "\n";
+				std::cout << "file path: " << list.datarefLocationAtIndex(i) << "\n";
+
+				std::string filepath = list.datarefLocationAtIndex(i);
+
+				SF_INFO info;
+				info.format = 0;
+				SNDFILE *sf = sf_open(filepath.c_str(), SFM_READ, &info);
+
+				// Use the file info to make a type
+				RNBO::Float32AudioBuffer bufferType(info.channels, info.samplerate);
+
+				if (sf) {
+					// Make space to store the file
+					const uint32_t sampleBufferSize = sizeof(float) * info.frames * info.channels;
+					float *sampleBuffer = (float *) malloc(sampleBufferSize);
+
+					int readSamples = sf_read_float(sf, (float *) sampleBuffer, sampleBufferSize);
+
+					rnbo->setExternalData(
+					idstr.c_str(),
+					(char *) sampleBuffer,
+					readSamples * sizeof(float) / sizeof(char),
+					bufferType,
+					&freeBuffer
+					);
+					std::cout << "--- Success: Read " << readSamples << " samples" << "\n";
+
+					sf_close(sf);
+				} else {
+					std::cout << "--- Failed" << "\n";
+				}
+			}
+		}
+	} catch (std::exception& e) {
+		std::cerr << "Error loading" << dependenciesJson << ": " << e.what() << "\n";
+	}
+#endif // BELA_RNBO_LOAD_DEPENDENCIES
+	// map I/Os
 	parametersFromAnalog.resize(std::min(parametersFromAnalog.size(), context->analogInChannels));
 	parametersFromDigital.resize(std::min(parametersFromDigital.size(), context->digitalChannels));
 #ifdef BELA_RNBO_USE_TRILL
