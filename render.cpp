@@ -33,12 +33,15 @@ static std::vector<unsigned int> parametersToDigital = {};
 static std::vector<unsigned int> parametersFromTrillLocation = {};
 // same but for mapping Trill size to parameters.
 static std::vector<unsigned int> parametersFromTrillSize = {};
+// same but for mapping of trill RAW or DIFF pads
+static std::vector<unsigned int> parametersFromTrillChannels = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29};
 static std::vector<Trill*> trills {
 	// add/edit more Trills here
-	new Trill(1, Trill::BAR),
+	new Trill(1, Trill::CRAFT),
 };
 static std::vector<float> trillLocationParametersPast(parametersFromTrillLocation.size());
 static std::vector<float> trillSizeParametersPast(parametersFromTrillSize.size());
+static std::vector<float> trillChannelsParametersPast(parametersFromTrillChannels.size());
 #endif // BELA_RNBO_USE_TRILL
 
 // whether to show hidden parameters when printing the parameters list
@@ -193,6 +196,7 @@ bool setup(BelaContext *context, void *userData)
 #ifdef BELA_RNBO_USE_TRILL
 	parametersFromTrillLocation.resize(std::min(parametersFromTrillLocation.size(), trills.size()));
 	parametersFromTrillSize.resize(std::min(parametersFromTrillSize.size(), trills.size()));
+	parametersFromTrillChannels.resize(trills.size() ? trills[0].rawData.size());
 #endif // BELA_RNBO_USE_TRILL
 	unsigned int hiddenParameters = 0;
 	printf("Available parameters: %u\n", rnbo->getNumParameters());
@@ -212,6 +216,7 @@ bool setup(BelaContext *context, void *userData)
 #ifdef BELA_RNBO_USE_TRILL
 		ssize_t trillLocation = findIndex(n, parametersFromTrillLocation);
 		ssize_t trillSize = findIndex(n, parametersFromTrillSize);
+		ssize_t trillChannels = findIndex(n, parametersFromTrillChannels);
 #endif // BELA_RNBO_USE_TRILL
 		if(analog >= 0)
 			printf(" - controlled by analog in %d", analog);
@@ -228,6 +233,8 @@ bool setup(BelaContext *context, void *userData)
 			printf(" - controlled by Trill location %d", trillLocation);
 		if(trillSize >= 0)
 			printf(" - controlled by Trill size %d", trillSize);
+		if(trillChannels >= 0)
+			printf(" - controlled by Trill channels %d", trillChannels);
 #endif // BELA_RNBO_USE_TRILL
 		printf("\n");
 		if(analog >= 0 && digitalIn >= 0)
@@ -309,6 +316,7 @@ void render(BelaContext *context, void *userData)
 #ifdef BELA_RNBO_USE_TRILL
 	sendOnChange(trillLocationParametersPast, parametersFromTrillLocation, [](unsigned int c, void*) -> float { return trills[c]->compoundTouchLocation(); });
 	sendOnChange(trillSizeParametersPast, parametersFromTrillSize, [](unsigned int c, void*) -> float { return trills[c]->compoundTouchSize(); });
+	sendOnChange(trillChannelsParametersPast, parametersFromChannelslSize, [](unsigned int c, void*) -> float { return trills[0]->rawData[c]; });
 #endif // BELA_RNBO_USE_TRILL
 
 	unsigned int maxInChannels = context->audioInChannels + context->analogInChannels - nAnalogParameters;
