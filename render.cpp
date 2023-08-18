@@ -4,6 +4,7 @@
 #include <MiscUtilities.h>
 #include <algorithm>
 
+#define BELA_RNBO_USE_MIDI // uncomment to use MIDI
 //#define BELA_RNBO_USE_TRILL // uncomment to use Trill
 //#define BELA_RNBO_LOAD_DEPENDENCIES // uncomment to load dependencies such as audio files
 
@@ -48,6 +49,12 @@ bool showHiddenParameters = false;
 static RNBO::CoreObject* rnbo;
 static RNBO::PresetList* presetList;
 static std::vector<bool> digitalParametersPast(parametersFromDigital.size());
+static RNBO::MidiEventList midiInput; // whether it's actually used or not depends on BELA_RNBO_USE_MIDI
+#ifdef BELA_RNBO_USE_MIDI
+static bool useMidi = false;
+#include <libraries/Midi/Midi.h>
+static Midi midi;
+#endif // BELA_RNBO_USE_MIDI
 
 void Bela_userSettings(BelaInitSettings *settings)
 {
@@ -114,6 +121,14 @@ bool setup(BelaContext *context, void *userData)
 		return false;
 	}
 	rnbo = new RNBO::CoreObject;
+#ifdef BELA_RNBO_USE_MIDI
+	useMidi = rnbo->getNumMidiInputPorts() > 0;
+	if(useMidi)
+	{
+		midi.readFrom("hw:0,0,0");
+		midi.enableParser(true);
+	}
+#endif // BELA_RNBO_USE_MIDI
 #ifdef BELA_RNBO_LOAD_DEPENDENCIES
 	// Read in the dependencies.json file as a std::string
 	const std::string dependenciesJson("dependencies.json");
@@ -273,6 +288,24 @@ void render(BelaContext *context, void *userData)
 		if(kNoParam != parametersToDigital[c])
 			digitalWrite(context, 0, c, rnbo->getParameterValue(parametersToDigital[c]) > 0.5f);
 	}
+#ifdef BELA_RNBO_USE_MIDI
+	if(useMidi)
+	{
+		midiInput.clear();
+		int num;
+		while((num = midi.getParser()->numAvailableMessages()) > 0)
+		{
+			MidiChannelMessage message = midi.getParser()->getNextChannelMessage();
+			size_t numDataBytes = message.getNumDataBytes();
+			size_t msgSize = numDataBytes + 1;
+			midi_byte_t msg[msgSize];
+			msg[0] = message.getStatusByte();
+			for(size_t n = 0; n < numDataBytes; ++n)
+				msg[1 + n] = message.getDataByte(n);
+			midiInput.addEvent(RNBO::MidiEvent(0, 0, msg, msgSize));
+		}
+	}
+#endif // BELA_RNBO_USE_MIDI
 #ifdef BELA_RNBO_USE_TRILL
 	sendOnChange(trillLocationParametersPast, parametersFromTrillLocation, [](unsigned int c, void*) -> float { return trills[c]->compoundTouchLocation(); });
 	sendOnChange(trillSizeParametersPast, parametersFromTrillSize, [](unsigned int c, void*) -> float { return trills[c]->compoundTouchSize(); });
@@ -303,7 +336,7 @@ void render(BelaContext *context, void *userData)
 		else
 			outputs[c] = context->analogOut + (c - (context->audioOutChannels)) * nFrames;
 	}
-	rnbo->process(inputs, nInChannels, outputs, nOutChannels, nFrames);
+	rnbo->process(inputs, nInChannels, outputs, nOutChannels, nFrames, &midiInput);
 }
 
 void cleanup(BelaContext *context, void *userData)
