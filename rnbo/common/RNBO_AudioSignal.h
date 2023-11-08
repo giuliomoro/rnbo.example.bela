@@ -84,7 +84,7 @@ namespace RNBO {
 
 	static inline number rand01()
 	{
-		return number(rand()) / RAND_MAX;
+		return number(rand()) / number(RAND_MAX);
 	}
 
 	static inline float bitwiseFloat(unsigned long n)

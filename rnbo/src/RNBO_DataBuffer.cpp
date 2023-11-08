@@ -7,6 +7,7 @@
 //
 
 #include "RNBO_DataBuffer.h"
+#include <string.h>
 
 namespace RNBO {
 
