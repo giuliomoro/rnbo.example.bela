@@ -3,6 +3,7 @@
 
 #include "RNBO_Types.h"
 #include "RNBO_PlatformInterface.h"
+#include "RNBO_Array.h"
 
 #ifdef RNBO_NOSTDLIB
 #include "RNBO_UniquePtr.h"
@@ -36,6 +37,27 @@ namespace RNBO {
 		, _allocatedLength(0)
 		{
 			allocate(length, false);
+		}
+
+		/**
+		 * @brief Copy constructor from a RNBO::array
+		 *
+		 * @tparam N the length of the array and new listbase
+		 *
+		 * @code{.cpp}
+		 * array<int, 4> arr(7, 4, 0, 1);
+		 * listbase<int> lst(arr);
+		 * @endcode
+		 */
+		template<size_t N> listbase(const array<T, N>& arr)
+		: length(N)
+		, _values(nullptr)
+		, _allocatedLength(0)
+		{
+			allocate(length, false);
+			for (size_t i = 0; i < N; i++) {
+				_values[i] = arr[i];
+			}
 		}
 
 		/**
@@ -465,11 +487,6 @@ namespace RNBO {
 		 * @brief the number of elements in the list
 		 */
 		size_t	length = 0;
-
-		/**
-		 * @brief get a pointer to the internal values, for memcopy etc
-		 */
-		T* inner() const { return _values; }
 
 	protected:
 		void allocate(size_t size, bool keepValues)

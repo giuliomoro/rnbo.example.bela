@@ -95,11 +95,6 @@ namespace RNBO {
 			snprintf(str, maxlen, "%d", val);
 		}
 
-		void toString(char* str, size_t maxlen, unsigned int val) override
-		{
-			snprintf(str, maxlen, "%u", val);
-		}
-
 		void toString(char* str, size_t maxlen, long val) override
 		{
 			snprintf(str, maxlen, "%ld", val);

@@ -60,14 +60,13 @@ namespace RNBO_Math {
 	#endif
 	}
 
-	inline int rnbo_isnan(int /* x */) {
+	inline int rnbo_isnan(int x) {
 		return false;
 	}
 
 	constexpr RNBO::number rnbo_number_max() {
 #ifndef RNBO_NOSTDLIB
-		//funny syntax is to work around windows.h max macro conflict
-		return (std::numeric_limits<RNBO::number>::max)();
+		return std::numeric_limits<RNBO::number>::max();
 #else
 #ifdef RNBO_USE_FLOAT32
 

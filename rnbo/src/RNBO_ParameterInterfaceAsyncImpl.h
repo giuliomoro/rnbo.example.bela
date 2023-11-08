@@ -2,7 +2,6 @@
 #define RNBOPlugin_ParameterInterfaceAsyncImpl_h
 
 #include "RNBO_ParameterEventQueue.h"
-#include "src/RNBO_Engine.h"
 
 #ifdef RNBO_DEBUG
 #define RNBO_DRAIN_THRESHOLD 1024

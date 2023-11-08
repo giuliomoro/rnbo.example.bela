@@ -13,13 +13,6 @@
 
 namespace RNBO {
 
-	//typedefs to simplify conversion, Conv is the other bit depth
-#ifdef RNBO_USE_FLOAT32
-	using SampleValueConv = double;
-#else
-	using SampleValueConv = float;
-#endif
-
 	/**
 	 * @private
 	 * Container class for audio data to be converted
@@ -31,7 +24,6 @@ namespace RNBO {
 		}
 
 		void setup(size_t numChannels, size_t sampleFrames) {
-			//TODO use platform interface
 			if (numChannels != _numChannels || sampleFrames != _sampleFrames) {
 				deleteBuffers();
 				_conversionBuffer  = new SampleValue*[numChannels];
@@ -83,12 +75,8 @@ namespace RNBO {
 		: _data(data)
 		{}
 
-		const SampleValue* const * getReadBuffers() {
-			return const_cast<const SampleValue* const *>(_audioBufferInternalPointers);
-		}
-
-		SampleValue* const * getWriteBuffers() {
-			return const_cast<SampleValue* const *>(_audioBufferInternalPointers);
+		SampleValue** getInternalBuffers() {
+			return _audioBufferInternalPointers;
 		}
 
 		template <typename U>
@@ -106,7 +94,7 @@ namespace RNBO {
 	protected:
 
 		template <typename U, typename V>
-		void copyBuffer(U src, V* const* dst, size_t numChannels, size_t sampleFrames)
+		void copyBuffer(U src, V** dst, size_t numChannels, size_t sampleFrames)
 		{
 			for (size_t i = 0; i < numChannels; i++) {
 				for (size_t j = 0; j < sampleFrames; j ++) {
@@ -126,7 +114,7 @@ namespace RNBO {
 		}
 
 		template <typename U, typename V>
-		void copyToInterleaved(U src, V * const dst, size_t numChannels, size_t sampleFrames)
+		void copyToInterleaved(U src, V* dst, size_t numChannels, size_t sampleFrames)
 		{
 			for (size_t i = 0; i < numChannels; i++) {
 				for (size_t j = 0; j < sampleFrames; j ++) {
@@ -150,14 +138,15 @@ namespace RNBO {
 	};
 
 	// these converters only make sense when SampleValue != converted value
+#ifdef RNBO_USE_FLOAT32
 	/**
 	 * @private
 	 * Convert to double pointers
 	 */
 	template <>
-	class AudioInBufferConverter<const SampleValueConv* const*> : public AudioBufferConverterBase {
+	class AudioInBufferConverter<double**> : public AudioBufferConverterBase {
 	public:
-		AudioInBufferConverter(const SampleValueConv* const* audioBuffers, size_t numChannels, size_t sampleFrames, AudioBufferConverterData* data)
+		AudioInBufferConverter(double** audioBuffers, size_t numChannels, size_t sampleFrames, AudioBufferConverterData* data)
 		: AudioBufferConverterBase(data)
 		{
 			_data->setup(numChannels, sampleFrames);
@@ -165,13 +154,32 @@ namespace RNBO {
 			copyBuffer(audioBuffers, _audioBufferInternalPointers, numChannels, sampleFrames);
 		}
 	};
-
-
-	//interleaved
+#else
+	/**
+	 * @private
+	 * Convert to float pointers
+	 */
 	template <>
-	class AudioInBufferConverter<SampleValue const*> : public AudioBufferConverterBase {
+	class AudioInBufferConverter<float**> : public AudioBufferConverterBase {
 	public:
-		AudioInBufferConverter(SampleValue const* audioBuffers, size_t numChannels, size_t sampleFrames, AudioBufferConverterData* data)
+		AudioInBufferConverter(float** audioBuffers, size_t numChannels, size_t sampleFrames, AudioBufferConverterData* data)
+		: AudioBufferConverterBase(data)
+		{
+			_data->setup(numChannels, sampleFrames);
+			_audioBufferInternalPointers = _data->getConversionBuffer();
+			copyBuffer(audioBuffers, _audioBufferInternalPointers, numChannels, sampleFrames);
+		}
+	};
+#endif // RNBO_USE_FLOAT32
+
+	/**
+	 * @private
+	 * Convert to floats
+	 */
+	template <>
+	class AudioInBufferConverter<float*> : public AudioBufferConverterBase {
+	public:
+		AudioInBufferConverter(float* audioBuffers, size_t numChannels, size_t sampleFrames, AudioBufferConverterData* data)
 		: AudioBufferConverterBase(data)
 		{
 			_data->setup(numChannels, sampleFrames);
@@ -180,10 +188,14 @@ namespace RNBO {
 		}
 	};
 
+	/**
+	 * @private
+	 * Convert to doubles
+	 */
 	template <>
-	class AudioInBufferConverter<SampleValueConv const*> : public AudioBufferConverterBase {
+	class AudioInBufferConverter<double*> : public AudioBufferConverterBase {
 	public:
-		AudioInBufferConverter(SampleValueConv const* audioBuffers, size_t numChannels, size_t sampleFrames, AudioBufferConverterData* data)
+		AudioInBufferConverter(double* audioBuffers, size_t numChannels, size_t sampleFrames, AudioBufferConverterData* data)
 		: AudioBufferConverterBase(data)
 		{
 			_data->setup(numChannels, sampleFrames);
@@ -192,50 +204,6 @@ namespace RNBO {
 		}
 	};
 
-	//diff const versions
-	template <>
-	class AudioInBufferConverter<SampleValue* const*> : public AudioBufferConverterBase {
-	public:
-		AudioInBufferConverter(SampleValue* const* audioBuffers, size_t /* numChannels */, size_t /* sampleFrames */, AudioBufferConverterData* data)
-		: AudioBufferConverterBase(data)
-		{
-			//simply forward existing pointer
-			_audioBufferInternalPointers = const_cast<SampleValue**>(audioBuffers);
-		}
-	};
-
-	template <>
-	class AudioInBufferConverter<SampleValue**> : public AudioInBufferConverter<SampleValue *const*> {
-	public:
-		AudioInBufferConverter(SampleValue** audioBuffers, size_t numChannels, size_t sampleFrames, AudioBufferConverterData* data)
-		: AudioInBufferConverter<SampleValue* const*>(audioBuffers, numChannels, sampleFrames, data)
-		{
-		}
-	};
-
-	template <>
-	class AudioInBufferConverter<SampleValueConv* const*> : public AudioInBufferConverter<const SampleValueConv* const*> {
-	public:
-		AudioInBufferConverter(SampleValueConv* const* audioBuffers, size_t numChannels, size_t sampleFrames, AudioBufferConverterData* data)
-		: AudioInBufferConverter<const SampleValueConv * const*>(audioBuffers, numChannels, sampleFrames, data)
-		{ }
-	};
-
-	template <>
-	class AudioInBufferConverter<SampleValueConv**> : public AudioInBufferConverter<const SampleValueConv* const*> {
-	public:
-		AudioInBufferConverter(SampleValueConv** audioBuffers, size_t numChannels, size_t sampleFrames, AudioBufferConverterData* data)
-		: AudioInBufferConverter<const SampleValueConv * const*>(audioBuffers, numChannels, sampleFrames, data)
-		{ }
-	};
-
-	template <>
-	class AudioInBufferConverter<SampleValueConv *> : public AudioInBufferConverter<SampleValueConv const *> {
-	public:
-		AudioInBufferConverter(SampleValueConv const* audioBuffers, size_t numChannels, size_t sampleFrames, AudioBufferConverterData* data)
-			: AudioInBufferConverter<SampleValueConv const *>(audioBuffers, numChannels, sampleFrames, data)
-		{ }
-	};
 
 	/**
 	 * @private
@@ -248,13 +216,17 @@ namespace RNBO {
 		AudioOutBufferConverter();
 	};
 
-
+	// these converters only make sense when SampleValue != converted value
+#ifdef RNBO_USE_FLOAT32
+	/**
+	 * @private
+	 * Convert to double pointers
+	 */
 	template <>
-	class AudioOutBufferConverter<SampleValueConv* const*> : public AudioBufferConverterBase {
+	class AudioOutBufferConverter<double**> : public AudioBufferConverterBase {
 	public:
-		AudioOutBufferConverter(SampleValueConv* const* audioBuffers, size_t numChannels, size_t sampleFrames, AudioBufferConverterData* data)
+		AudioOutBufferConverter(double** audioBuffers, size_t numChannels, size_t sampleFrames, AudioBufferConverterData* data)
 		: AudioBufferConverterBase(data)
-		, _audioBuffers(audioBuffers)
 		{
 			_data->setup(numChannels, sampleFrames);
 			_audioBufferInternalPointers = _data->getConversionBuffer();
@@ -266,14 +238,41 @@ namespace RNBO {
 		}
 
 	private:
-		SampleValueConv* const* _audioBuffers;
+		double** _audioBuffers = nullptr;
 	};
-
-	//interleaved
+#else
+	/**
+	 * @private
+	 * Convert to float pointers
+	 */
 	template <>
-	class AudioOutBufferConverter<SampleValue * const> : public AudioBufferConverterBase {
+	class AudioOutBufferConverter<float**> : public AudioBufferConverterBase {
 	public:
-		AudioOutBufferConverter(SampleValue * const audioBuffers, size_t numChannels, size_t sampleFrames, AudioBufferConverterData* data)
+		AudioOutBufferConverter(float** audioBuffers, size_t numChannels, size_t sampleFrames, AudioBufferConverterData* data)
+		: AudioBufferConverterBase(data)
+		{
+			_data->setup(numChannels, sampleFrames);
+			_audioBufferInternalPointers = _data->getConversionBuffer();
+			_audioBuffers = audioBuffers;
+		}
+
+		~AudioOutBufferConverter() {
+			copyBuffer(_audioBufferInternalPointers, _audioBuffers, _data->getNumChannels(), _data->getSampleFrames());
+		}
+
+	private:
+		float** _audioBuffers = nullptr;
+	};
+#endif // RNBO_USE_FLOAT32
+
+	/**
+	 * @private
+	 * Convert to floats
+	 */
+	template <>
+	class AudioOutBufferConverter<float*> : public AudioBufferConverterBase {
+	public:
+		AudioOutBufferConverter(float* audioBuffers, size_t numChannels, size_t sampleFrames, AudioBufferConverterData* data)
 		: AudioBufferConverterBase(data)
 		, _audioBuffers(audioBuffers)
 		{
@@ -286,13 +285,17 @@ namespace RNBO {
 		}
 
 	private:
-		SampleValue * const _audioBuffers;
+		float* _audioBuffers = nullptr;
 	};
 
+	/**
+	 * @private
+	 * Convert to doubles
+	 */
 	template <>
-	class AudioOutBufferConverter<SampleValueConv * const> : public AudioBufferConverterBase {
+	class AudioOutBufferConverter<double*> : public AudioBufferConverterBase {
 	public:
-		AudioOutBufferConverter(SampleValueConv * const audioBuffers, size_t numChannels, size_t sampleFrames, AudioBufferConverterData* data)
+		AudioOutBufferConverter(double* audioBuffers, size_t numChannels, size_t sampleFrames, AudioBufferConverterData* data)
 		: AudioBufferConverterBase(data)
 		, _audioBuffers(audioBuffers)
 		{
@@ -305,36 +308,7 @@ namespace RNBO {
 		}
 
 	private:
-		SampleValueConv * const _audioBuffers;
-	};
-
-	//diff const versions
-	template <>
-	class AudioOutBufferConverter<SampleValue**> : public AudioBufferConverterBase {
-	public:
-		AudioOutBufferConverter(SampleValue** audioBuffers, size_t /* numChannels */, size_t /* sampleFrames */, AudioBufferConverterData* data)
-		: AudioBufferConverterBase(data)
-		{
-			//simply forward the pointer
-			_audioBufferInternalPointers = const_cast<SampleValue**>(audioBuffers);
-		}
-
-	};
-
-	template <>
-	class AudioOutBufferConverter<SampleValueConv**> : public AudioOutBufferConverter<SampleValueConv* const*> {
-	public:
-		AudioOutBufferConverter(SampleValueConv** audioBuffers, size_t numChannels, size_t sampleFrames, AudioBufferConverterData* data)
-		: AudioOutBufferConverter<SampleValueConv* const*>(audioBuffers, numChannels, sampleFrames, data)
-		{ }
-	};
-
-	template <>
-	class AudioOutBufferConverter<SampleValueConv *> : public AudioOutBufferConverter<SampleValueConv * const> {
-	public:
-		AudioOutBufferConverter(SampleValueConv * audioBuffers, size_t numChannels, size_t sampleFrames, AudioBufferConverterData* data)
-		: AudioOutBufferConverter<SampleValueConv * const>(audioBuffers, numChannels, sampleFrames, data)
-		{ }
+		double* _audioBuffers = nullptr;
 	};
 
 } // namespace RNBO

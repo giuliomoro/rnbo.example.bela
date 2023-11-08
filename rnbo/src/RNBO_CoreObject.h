@@ -11,7 +11,6 @@
 #include "RNBO_ParameterEventInterface.h"
 #include "RNBO_EventVariant.h"
 #include "RNBO_List.h"
-#include "RNBO_Array.h"
 #include "RNBO_ExternalData.h"
 #include "RNBO_DataRef.h"
 #include "RNBO_AudioBufferConverter.h"
@@ -417,8 +416,8 @@ namespace RNBO {
 		 * @param midiOutput an optional pointer to a MidiEventList which can receive MIDI output generated during the
 		 *                   audio vector
 		 */
-		void process(const SampleValue* const * audioInputs, Index numInputs,
-					 SampleValue* const * audioOutputs, Index numOutputs,
+		void process(SampleValue** audioInputs, Index numInputs,
+					 SampleValue** audioOutputs, Index numOutputs,
 					 Index sampleFrames,
 					 const MidiEventList* midiInput = nullptr, MidiEventList* midiOutput = nullptr);
 
@@ -429,8 +428,7 @@ namespace RNBO {
 		 * not sizeof(SampleValue) or the buffers are interleaved), use this method to convert and process the audio
 		 * buffers.
 		 *
-		 * @tparam I the type of input audio buffer
-		 * @tparam O the type of output audio buffer
+		 * @tparam T the type of audio buffer
 		 * @param audioInputs audio input buffers
 		 * @param numInputs the number of audio input buffers
 		 * @param audioOutputs audio output buffers
@@ -439,22 +437,21 @@ namespace RNBO {
 		 * @param midiInput an optional pointer to a MidiEventList of input events associated with this audio vector
 		 * @param midiOutput an optional pointer to a
 		 */
-		template <typename I, typename O>
-		void process(I audioInputs, Index numInputs,
-					 O audioOutputs, Index numOutputs,
+		template <typename T>
+		void process(T audioInputs, Index numInputs,
+					 T audioOutputs, Index numOutputs,
 					 Index sampleFrames,
 					 const MidiEventList* midiInput = nullptr,
 					 MidiEventList* midiOutput = nullptr)
 		{
-			AudioInBufferConverter<I> audioInBuffer(audioInputs, numInputs, sampleFrames, &_audioInData);
-			AudioOutBufferConverter<O> audioOutBuffer(audioOutputs, numOutputs, sampleFrames, &_audioOutData);
+			AudioInBufferConverter<T> audioInBuffer(audioInputs, numInputs, sampleFrames, &_audioInData);
+			AudioOutBufferConverter<T> audioOutBuffer(audioOutputs, numOutputs, sampleFrames, &_audioOutData);
 
-			process(audioInBuffer.getReadBuffers(), numInputs,
-				audioOutBuffer.getWriteBuffers(), numOutputs,
+			process(audioInBuffer.getInternalBuffers(), numInputs,
+				audioOutBuffer.getInternalBuffers(), numOutputs,
 				sampleFrames,
 				midiInput, midiOutput);
 		}
-
 
 		/**
 		 * @return the number of audio input channels processed by the current patcher
