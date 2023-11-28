@@ -7,7 +7,6 @@
 
 #ifndef _RNBO_EmptyEvent_h
 #define _RNBO_EmptyEvent_h
-#include "common/RNBO_EventTarget.h"
 
 namespace RNBO {
 
