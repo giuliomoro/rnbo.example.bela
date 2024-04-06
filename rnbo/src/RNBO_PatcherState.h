@@ -15,7 +15,9 @@
 #include "RNBO_Types.h"
 #include "RNBO_ExternalPtr.h"
 #include "RNBO_PatcherEventTarget.h"
+#include "RNBO_PatcherStateInterface.h"
 #include "RNBO_List.h"
+#include "RNBO_String.h"
 #include "RNBO_DataRef.h"
 
 #include "3rdparty/MPark_variant/variant.hpp"
