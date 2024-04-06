@@ -40,6 +40,7 @@ namespace RNBO {
 				case Event::DataRef: handleDataRefEvent(ev.getDataRefEvent()); break;
 				case Event::Outlet: handleOutletEvent(ev.getOutletEvent()); break;
 				case Event::Parameter: handleParameterEvent(ev.getParameterEvent()); break;
+				case Event::ParameterBang: handleParameterBangEvent(ev.getParameterBangEvent()); break;
 				case Event::Message: handleMessageEvent(ev.getMessageEvent()); break;
 				case Event::Tempo: handleTempoEvent(ev.getTempoEvent()); break;
 				case Event::Transport: handleTransportEvent(ev.getTransportEvent()); break;
@@ -79,6 +80,11 @@ namespace RNBO {
 		void handleParameterEvent(const ParameterEvent& pe) const {
 			PatcherEventTarget* eventTarget = pe.getEventTarget() ? pe.getEventTarget() : _fallbackTarget;
 			eventTarget->processParameterEvent(pe.getIndex(), pe.getValue(), correctTime(pe.getTime()));
+		}
+
+		void handleParameterBangEvent(const ParameterBangEvent& pe) const {
+			PatcherEventTarget* eventTarget = pe.getEventTarget() ? pe.getEventTarget() : _fallbackTarget;
+			eventTarget->processParameterBangEvent(pe.getIndex(), correctTime(pe.getTime()));
 		}
 
 		void handleMessageEvent(const MessageEvent& me) const {

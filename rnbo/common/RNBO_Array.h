@@ -11,6 +11,12 @@ namespace RNBO {
 	template<class T, size_t N> class array {
 	public:
 
+		array() {
+			for (size_t i = 0; i < N; i++) {
+				_values[i] = _dummy;
+			}
+		}
+
 		template<typename... Ts> array(Ts ... args)
 		{
 			// since allocating an array of 0 length is invalid, we always allocate at least length 1

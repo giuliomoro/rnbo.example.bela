@@ -2,7 +2,6 @@
 #define RNBOPlugin_ParameterInterfaceAsyncImpl_h
 
 #include "RNBO_ParameterEventQueue.h"
-#include "src/RNBO_Engine.h"
 
 #ifdef RNBO_DEBUG
 #define RNBO_DRAIN_THRESHOLD 1024
@@ -86,6 +85,7 @@ namespace RNBO {
 		, _handler(handler)
 		, _minimumParameterChangeNotificationPeriod(15.)	// minimum time, in milliseconds, between each outgoing parameter change notification
 		, _lastOutgoingParameterUpdateTime(-1)	// negative indicates - do it immediately
+		, _lastSource(this)
 		{
 			_active = true;
 
@@ -274,9 +274,10 @@ namespace RNBO {
 					case Event::Parameter:
 					{
 						ParameterEvent pe = ev.getParameterEvent();
-						if (pe.getSource() == this) {
+						const auto source = pe.getSource();
+						if (source == this) {
 							const bool sameValue = pe.getValue() == _parameters[pe.getIndex()];
-							if (!sameValue) {
+							if (!sameValue && source != _lastSource) {
 								updateShadowValue(pe);
 								_handler->handleParameterEvent(pe);
 							}
@@ -285,6 +286,7 @@ namespace RNBO {
 							updateShadowValue(pe);
 							_handler->handleParameterEvent(pe);
 						}
+						_lastSource = source;
 						break;
 					}
 					case Event::Midi:
@@ -320,6 +322,7 @@ namespace RNBO {
 					case Event::DataRef:
 					case Event::Outlet:
 					case Event::Universal:
+					case Event::ParameterBang:
 					default:
 						break;
 				}
@@ -358,6 +361,7 @@ namespace RNBO {
 		std::vector<ParameterEvent>		_lastOutgoingParameterEvents;
 		MillisecondTime					_minimumParameterChangeNotificationPeriod;
 		MillisecondTime					_lastOutgoingParameterUpdateTime;
+		ParameterInterfaceId			_lastSource;
 
 #ifdef RNBO_DEBUG
 		short							_drainEventsCounter = 0;

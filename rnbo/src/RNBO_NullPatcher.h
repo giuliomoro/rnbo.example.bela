@@ -66,6 +66,11 @@ namespace RNBO {
 			RNBO_UNUSED(time);
 		}
 
+		void processParameterBangEvent(ParameterIndex index, MillisecondTime time) override {
+			RNBO_UNUSED(index);
+			RNBO_UNUSED(time);
+		}
+
 		void processNormalizedParameterEvent(ParameterIndex index, ParameterValue value, MillisecondTime time) override {
 			RNBO_UNUSED(index);
 			RNBO_UNUSED(value);

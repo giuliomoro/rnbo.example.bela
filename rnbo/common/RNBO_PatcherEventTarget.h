@@ -29,10 +29,11 @@ namespace RNBO {
 		virtual void processNumMessage(MessageTag tag, MessageTag objectId, MillisecondTime time, number payload) = 0;
 		virtual void processListMessage(MessageTag tag, MessageTag objectId, MillisecondTime time, const list& payload) = 0;
 		virtual void processBangMessage(MessageTag tag, MessageTag objectId, MillisecondTime time) = 0;
-		virtual void processTempoEvent(MillisecondTime time, Tempo tempo) = 0;
-		virtual void processTransportEvent(MillisecondTime time, TransportState state) = 0;
-		virtual void processBeatTimeEvent(MillisecondTime time, BeatTime beatTime) = 0;
-		virtual void processTimeSignatureEvent(MillisecondTime time, int numerator, int denominator) = 0;
+		virtual void processTempoEvent(MillisecondTime, Tempo) {}
+		virtual void processTransportEvent(MillisecondTime, TransportState) {}
+		virtual void processBeatTimeEvent(MillisecondTime, BeatTime) {}
+		virtual void processTimeSignatureEvent(MillisecondTime, int, int) {}
+		virtual void processParameterBangEvent(ParameterIndex index, MillisecondTime time) = 0;
 
 	protected:
 

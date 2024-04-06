@@ -146,6 +146,11 @@ namespace RNBO {
 			_wrappedObject->processParameterEvent(index, value, time);
 		}
 
+		void processParameterBangEvent(ParameterIndex index, MillisecondTime time) override
+		{
+			_wrappedObject->processParameterBangEvent(index, time);
+		}
+
 		void processNormalizedParameterEvent(ParameterIndex index, ParameterValue value, MillisecondTime time) override
 		{
 			_wrappedObject->processNormalizedParameterEvent(index, value, time);

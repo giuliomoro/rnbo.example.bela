@@ -101,6 +101,59 @@ namespace RNBO {
 
 	};
 
+	class ParameterBangEvent {
+
+	public:
+
+		ParameterBangEvent()
+		: _parameterIndex(INVALID_INDEX)
+		, _eventTime(0)
+		, _eventTarget(nullptr)
+		{
+		}
+
+		ParameterBangEvent(const ParameterBangEvent& other) = default;
+		ParameterBangEvent& operator = (const ParameterBangEvent& other) = default;
+
+		ParameterBangEvent(ParameterIndex parameterIndex, MillisecondTime eventTime, PatcherEventTarget* eventTarget = nullptr)
+		: _parameterIndex(parameterIndex)
+		, _eventTime(eventTime)
+		, _eventTarget(eventTarget)
+		{
+		}
+
+		bool operator==(const ParameterBangEvent& rhs) const
+		{
+			return rhs.getIndex() == getIndex()
+			&& rhs.getTime() == getTime()
+			&& rhs._eventTarget == _eventTarget;
+		}
+
+		ParameterIndex getIndex() const { return _parameterIndex; }
+		MillisecondTime getTime() const { return _eventTime; }
+		PatcherEventTarget* getEventTarget() const { return _eventTarget; }
+
+		bool isValid() const { return _parameterIndex != INVALID_INDEX; }
+		void invalidate() { _parameterIndex = INVALID_INDEX; }
+
+		// debugging
+		void dumpEvent() const {
+			// disabling for now to avoid requiring fprintf support in generated code
+			// fprintf(stdout, "ParameterEvent: parameterIndex=%d time=%.3f\n", _parameterIndex, _eventTime);
+		}
+
+	private:
+
+		ParameterIndex				_parameterIndex;
+		MillisecondTime				_eventTime;
+
+		friend class EventVariant;
+
+		PatcherEventTarget*			_eventTarget;
+
+		void setTime(MillisecondTime eventTime) { _eventTime = eventTime; }
+	};
+
 } // namespace RNBO
 
 #endif // #ifndef _RNBO_ParameterEvent_H_
