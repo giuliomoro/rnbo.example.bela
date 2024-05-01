@@ -192,7 +192,7 @@ bool setup(BelaContext *context, void *userData)
 	}
 #endif // BELA_RNBO_LOAD_DEPENDENCIES
 	// map I/Os
-	parametersFromAnalog.resize(std::min(parametersFromAnalog.size(), context->analogInChannels));
+	parametersFromAnalog.resize(std::min(parametersFromAnalog.size(), context->analogInChannels * (context->multiplexerChannels ? context->multiplexerChannels : 1)));
 	parametersFromDigital.resize(std::min(parametersFromDigital.size(), context->digitalChannels));
 #ifdef BELA_RNBO_USE_TRILL
 	parametersFromTrillLocation.resize(std::min(parametersFromTrillLocation.size(), trills.size()));
@@ -289,7 +289,14 @@ void render(BelaContext *context, void *userData)
 	for(unsigned int c = 0; c < nAnalogParameters; ++c)
 	{
 		if(kNoParam != parametersFromAnalog[c])
-			rnbo->setParameterValueNormalized(parametersFromAnalog[c], analogReadNI(context, 0, c));
+		{
+			float value;
+			if(context->multiplexerChannels <= 1)
+				value = analogReadNI(context, 0, c);
+			else
+				value = context->multiplexerAnalogIn[c];
+			rnbo->setParameterValueNormalized(parametersFromAnalog[c], value);
+		}
 	}
 	sendOnChange(digitalParametersPast, parametersFromDigital, [](unsigned int c, BelaContext* context ) -> float { return digitalRead(context, 0, c); }, context);
 	for(unsigned int c = 0; c < parametersToDigital.size(); ++c)
