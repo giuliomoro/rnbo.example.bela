@@ -11,6 +11,7 @@
 // The code for BELA_RNBO_LOAD_DEPENDENCIES follows closely the example [here](https://rnbo.cycling74.com/learn/loading-file-dependencies)
 
 #ifdef BELA_RNBO_USE_TRILL
+bool trillHold = false; // whether to hold the latest value when releasing a finger
 #include <libraries/Trill/Trill.h>
 #endif // BELA_RNBO_USE_TRILL
 
@@ -263,13 +264,14 @@ bool setup(BelaContext *context, void *userData)
 }
 
 template <typename T, typename F, typename A = void*>
-static void sendOnChange(std::vector<T>& past, std::vector<unsigned int>& parameters, F func, A arg = (void*)nullptr)
+static void sendOnChange(std::vector<T>& past, std::vector<unsigned int>& parameters, F func, A arg = (void*)nullptr, bool(*shouldSendFunc)(unsigned int) = nullptr)
 {
 	for(unsigned int c = 0; c < parameters.size(); ++c)
 	{
 		float value = func(c, arg);
+		bool shouldSend = shouldSendFunc ? shouldSendFunc(c) : true;
 		// only send on change
-		if(value != past[c])
+		if(value != past[c] && shouldSend)
 		{
 			if(kNoParam != parameters[c])
 			{
@@ -314,9 +316,10 @@ void render(BelaContext *context, void *userData)
 	}
 #endif // BELA_RNBO_USE_MIDI
 #ifdef BELA_RNBO_USE_TRILL
-	sendOnChange(trillLocationParametersPast, parametersFromTrillLocation, [](unsigned int c, void*) -> float { return trills[c]->compoundTouchLocation(); });
-	sendOnChange(trillHorizontalLocationParametersPast, parametersFromTrillHorizontalLocation, [](unsigned int c, void*) -> float { return trills[c]->compoundTouchHorizontalLocation(); });
-	sendOnChange(trillSizeParametersPast, parametersFromTrillSize, [](unsigned int c, void*) -> float { return trills[c]->compoundTouchSize(); });
+	auto trillShouldSend = trillHold ? [](unsigned int c) -> bool { return trills[c]->compoundTouchSize() > 0; } : [](unsigned int c) -> bool { return true; };
+	sendOnChange(trillLocationParametersPast, parametersFromTrillLocation, [](unsigned int c, void*) -> float { return trills[c]->compoundTouchLocation(); }, nullptr, trillShouldSend);
+	sendOnChange(trillHorizontalLocationParametersPast, parametersFromTrillHorizontalLocation, [](unsigned int c, void*) -> float { return trills[c]->compoundTouchHorizontalLocation(); }, nullptr, trillShouldSend);
+	sendOnChange(trillSizeParametersPast, parametersFromTrillSize, [](unsigned int c, void*) -> float { return trills[c]->compoundTouchSize(); }, nullptr, trillShouldSend);
 #endif // BELA_RNBO_USE_TRILL
 
 	unsigned int maxInChannels = context->audioInChannels + context->analogInChannels - nAnalogParameters;
