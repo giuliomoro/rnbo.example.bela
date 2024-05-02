@@ -12,6 +12,7 @@
 
 #ifdef BELA_RNBO_USE_TRILL
 bool trillHold = false; // whether to hold the latest value when releasing a finger
+bool trillMultitouch = false; // whether to use multiple touches per sensor
 #include <libraries/Trill/Trill.h>
 #endif // BELA_RNBO_USE_TRILL
 
@@ -195,9 +196,10 @@ bool setup(BelaContext *context, void *userData)
 	parametersFromAnalog.resize(std::min(parametersFromAnalog.size(), context->analogInChannels * (context->multiplexerChannels ? context->multiplexerChannels : 1)));
 	parametersFromDigital.resize(std::min(parametersFromDigital.size(), context->digitalChannels));
 #ifdef BELA_RNBO_USE_TRILL
-	parametersFromTrillLocation.resize(std::min(parametersFromTrillLocation.size(), trills.size()));
-	parametersFromTrillHorizontalLocation.resize(std::min(parametersFromTrillHorizontalLocation.size(), trills.size()));
-	parametersFromTrillSize.resize(std::min(parametersFromTrillSize.size(), trills.size()));
+	size_t trillsSize = trillMultitouch ? trills.size() * 5 : trills.size();
+	parametersFromTrillLocation.resize(std::min(parametersFromTrillLocation.size(), trillsSize));
+	parametersFromTrillHorizontalLocation.resize(std::min(parametersFromTrillHorizontalLocation.size(), trillsSize));
+	parametersFromTrillSize.resize(std::min(parametersFromTrillSize.size(), trillsSize));
 #endif // BELA_RNBO_USE_TRILL
 	unsigned int hiddenParameters = 0;
 	printf("Available parameters: %u\n", rnbo->getNumParameters());
@@ -230,12 +232,18 @@ bool setup(BelaContext *context, void *userData)
 			pinMode(context, 0, digitalOut, OUTPUT);
 		}
 #ifdef BELA_RNBO_USE_TRILL
+		auto getTrillId = [](unsigned int t) {
+			if(trillMultitouch)
+				return std::to_string(t / trills.size()) + ".t" + std::to_string(t % trills.size());
+			else
+				return std::to_string(t);
+		};
 		if(trillLocation >= 0)
-			printf(" - controlled by Trill location %d", trillLocation);
+			printf(" - controlled by Trill location %s", getTrillId(trillLocation).c_str());
 		if(trillHorizontalLocation >= 0)
-			printf(" - controlled by Trill horizontal location %d", trillHorizontalLocation);
+			printf(" - controlled by Trill horizontal location %s", getTrillId(trillHorizontalLocation).c_str());
 		if(trillSize >= 0)
-			printf(" - controlled by Trill size %d", trillSize);
+			printf(" - controlled by Trill size %s", getTrillId(trillSize).c_str());
 #endif // BELA_RNBO_USE_TRILL
 		printf("\n");
 		if(analog >= 0 && digitalIn >= 0)
@@ -276,10 +284,25 @@ static void sendOnChange(std::vector<T>& past, std::vector<unsigned int>& parame
 			if(kNoParam != parameters[c])
 			{
 				rnbo->setParameterValueNormalized(parameters[c], value);
+				rt_printf("par %d (channel %d) set to %f\n", parameters[c], c, value);
 				past[c] = value;
 			}
 		}
 	}
+}
+
+template <float (Trill::*multiMethod)(uint8_t), float (Trill::*singleMethod)()>
+static float trillGetTouches(unsigned int c, void*)
+{
+	if(trillMultitouch) {
+		unsigned int trill = c % trills.size();
+		unsigned int touch = c / trills.size();
+		if(touch < trills[trill]->getNumTouches())
+			return (trills[trill]->*multiMethod)(touch);
+		else
+			return 0;
+	} else
+		return (trills[c]->*singleMethod)();
 }
 
 void render(BelaContext *context, void *userData)
@@ -324,9 +347,11 @@ void render(BelaContext *context, void *userData)
 #endif // BELA_RNBO_USE_MIDI
 #ifdef BELA_RNBO_USE_TRILL
 	auto trillShouldSend = trillHold ? [](unsigned int c) -> bool { return trills[c]->compoundTouchSize() > 0; } : [](unsigned int c) -> bool { return true; };
-	sendOnChange(trillLocationParametersPast, parametersFromTrillLocation, [](unsigned int c, void*) -> float { return trills[c]->compoundTouchLocation(); }, nullptr, trillShouldSend);
-	sendOnChange(trillHorizontalLocationParametersPast, parametersFromTrillHorizontalLocation, [](unsigned int c, void*) -> float { return trills[c]->compoundTouchHorizontalLocation(); }, nullptr, trillShouldSend);
-	sendOnChange(trillSizeParametersPast, parametersFromTrillSize, [](unsigned int c, void*) -> float { return trills[c]->compoundTouchSize(); }, nullptr, trillShouldSend);
+	sendOnChange(trillLocationParametersPast, parametersFromTrillLocation, &trillGetTouches<&Trill::touchLocation, &Trill::compoundTouchLocation>,
+			nullptr, trillShouldSend);
+	sendOnChange(trillHorizontalLocationParametersPast, parametersFromTrillHorizontalLocation, &trillGetTouches<&Trill::touchHorizontalLocation, &Trill::compoundTouchHorizontalLocation>,
+			nullptr, trillShouldSend);
+	sendOnChange(trillSizeParametersPast, parametersFromTrillSize, &trillGetTouches<&Trill::touchSize, &Trill::compoundTouchSize>, nullptr, trillShouldSend);
 #endif // BELA_RNBO_USE_TRILL
 
 	unsigned int maxInChannels = context->audioInChannels + context->analogInChannels - nAnalogParameters;
