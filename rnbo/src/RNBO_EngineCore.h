@@ -409,6 +409,11 @@ namespace RNBO {
 
 			_paramNameHash.update(_patcher.get());
 
+			// we need to update the size of the shadow value array and update shadow values in the ParameterInterfaces
+			for (auto&& pi : _activeParameterInterfaces) {
+				pi->refreshParameterCountAndValues();
+			}
+
 			if (_patcherChangedHandler) {
 				_patcherChangedHandler->patcherChanged();
 			}

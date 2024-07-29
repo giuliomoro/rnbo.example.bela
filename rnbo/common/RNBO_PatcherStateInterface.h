@@ -39,10 +39,12 @@ namespace RNBO {
 			_state.add(_key, val);
 		}
 
-		operator number() { return _state.getFloat(_key); }
-
+		operator float() { return _state.getFloat(_key); }
+		operator double() { return _state.getDouble(_key); }
+		
 		explicit operator Int() { return _state.getInt(_key); }
-		explicit operator Index() { return _state.getIndex(_key); }
+		explicit operator UInt32() { return _state.getUInt32(_key); }
+		explicit operator UInt64() { return _state.getUInt64(_key); }
 		explicit operator bool() { return _state.getBool(_key); }
 		explicit operator signal() { return _state.getSignal(_key); }
 		explicit operator PatcherEventTarget*() { return _state.getEventTarget(_key); }
@@ -88,9 +90,11 @@ namespace RNBO {
 
 		friend class StateHelper<PatcherStateInterface>;
 
-		virtual void add(const char* key, number val) = 0;
+		virtual void add(const char* key, float val) = 0;
+		virtual void add(const char* key, double val) = 0;
 		virtual void add(const char* key, Int val) = 0;
-		virtual void add(const char* key, Index val) = 0;
+		virtual void add(const char* key, UInt32 val) = 0;
+		virtual void add(const char* key, UInt64 val) = 0;
 		virtual void add(const char* key, bool val) = 0;
 		virtual void add(const char* key, ExternalPtr& ext) = 0;
 		virtual void add(const char* key, PatcherEventTarget* patcherEventTarget) = 0;
@@ -100,9 +104,11 @@ namespace RNBO {
 		virtual void add(const char * key, signal sig) = 0;
 		virtual void add(const char * key, const char* str) = 0;
 
-		virtual number getFloat(const char* key) = 0;
+		virtual float getFloat(const char* key) = 0;
+		virtual double getDouble(const char* key) = 0;
 		virtual Int getInt(const char* key) = 0;
-		virtual Index getIndex(const char* key) = 0;
+		virtual UInt32 getUInt32(const char* key) = 0;
+		virtual UInt64 getUInt64(const char* key) = 0;
 		virtual bool getBool(const char* key) = 0;
 		virtual ExternalPtr getExternalPtr(const char* key) = 0;
 		virtual PatcherEventTarget* getEventTarget(const char* key) = 0;

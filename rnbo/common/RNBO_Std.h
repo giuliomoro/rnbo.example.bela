@@ -59,6 +59,7 @@
 #ifndef RNBO_NOSTDLIB
 
 #define USE_STD_VECTOR
+#define __STDC_LIMIT_MACROS
 
 #include <stddef.h>
 #include <stdint.h>
@@ -126,6 +127,22 @@ using uint32_t = __UINT32_TYPE__;
 #endif
 
 #endif  // RNBO_NOSTDLIB
+
+#ifndef INT32_MAX
+#define INT32_MAX   2147483647
+#endif
+
+#ifndef UINT32_MAX
+#define UINT32_MAX  4294967295U
+#endif
+
+#ifndef INT64_MAX
+#define INT64_MAX   9223372036854775807LL
+#endif
+
+#ifndef UINT64_MAX
+#define UINT64_MAX  18446744073709551615ULL
+#endif
 
 extern "C" {
 	void	*malloc(size_t);

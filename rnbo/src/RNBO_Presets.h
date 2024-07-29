@@ -5,6 +5,8 @@
 #ifndef _RNBO_Presets_H_
 #define _RNBO_Presets_H_
 
+#include "RNBO_Std.h"
+
 #ifdef RNBO_NOSTDLIB
 #define RNBO_NOPRESETS
 #endif
@@ -26,7 +28,7 @@ RNBO_PUSH_DISABLE_WARNINGS
 RNBO_POP_DISABLE_WARNINGS
 
 #include "RNBO_Utils.h"
-#include "common/RNBO_Debug.h"
+#include "RNBO_Debug.h"
 
 /**
  * @file RNBO_Presets.h
@@ -96,8 +98,13 @@ namespace RNBO {
 			const char *key = entry.first.c_str();
 			auto type = entry.second.getType();
 			switch (type) {
-				case ValueHolder::NUMBER: {
-					number value = (number)entry.second;
+				case ValueHolder::FLOAT: {
+					float value = (float)entry.second;
+					json[key] = value;
+					break;
+				}
+				case ValueHolder::DOUBLE: {
+					double value = (double)entry.second;
 					json[key] = value;
 					break;
 				}
@@ -132,8 +139,13 @@ namespace RNBO {
 					}
 					break;
 				}
-				case ValueHolder::INDEX: {
-					Index value = (Index)entry.second;
+				case ValueHolder::UINT32: {
+					UInt32 value = (UInt32)entry.second;
+					json[key] = value;
+					break;
+				}
+				case ValueHolder::UINT64: {
+					UInt64 value = (UInt64)entry.second;
 					json[key] = value;
 					break;
 				}
@@ -229,13 +241,23 @@ namespace RNBO {
 					const char *key = entry.first.c_str();
 					auto type = entry.second.getType();
 					switch (type) {
-						case ValueHolder::NUMBER: {
-							number value = (number)entry.second;
+						case ValueHolder::FLOAT: {
+							float value = (float)entry.second;
 							dst[key] = value;
 							break;
 						}
-						case ValueHolder::INDEX: {
-							Index value = (Index)entry.second;
+						case ValueHolder::DOUBLE: {
+							double value = (double)entry.second;
+							dst[key] = value;
+							break;
+						}
+						case ValueHolder::UINT32: {
+							UInt32 value = (UInt32)entry.second;
+							dst[key] = value;
+							break;
+						}
+						case ValueHolder::UINT64: {
+							UInt64 value = (UInt64)entry.second;
 							dst[key] = value;
 							break;
 						}

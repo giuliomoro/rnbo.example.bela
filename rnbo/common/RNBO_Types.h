@@ -78,7 +78,10 @@ namespace RNBO {
 	 * @var typedef RNBO::number RNBO::MillisecondTime
 	 * @brief working with time is usually done in milliseconds
 	 */
-	using MillisecondTime = number;
+	using MillisecondTime = double;
+
+	// for now we need MillisecondTime to be 64 bit to avoid losing precision in long running patches
+	static_assert(sizeof(MillisecondTime) * 8 == 64, "MillisecondTime has to be 64 bit");
 
 	/**
 	 * @var typedef RNBO::number RNBO::Tempo
@@ -104,7 +107,6 @@ namespace RNBO {
 	 * @var typedef size_t RNBO::Index
 	 * @brief an index into an array
 	 */
-	using Index = size_t;
 
 	/**
 	 * @var typedef intptr_t RNBO::Int
@@ -112,13 +114,18 @@ namespace RNBO {
 	 */
 	using Int = intptr_t;
 
-#ifdef RNBO_USE_FLOAT32
+#if defined(RNBO_USE_FLOAT32) || defined(RNBO_NO_INT64)
 	using UInt = uint32_t;
+	using Index = UInt;
+	const Index INVALID_INDEX = UINT32_MAX;
 #else
 	using UInt = uint64_t;
+	using Index = UInt;
+	const Index INVALID_INDEX = UINT64_MAX;
 #endif
 
-	const Index INVALID_INDEX = SIZE_MAX;
+	using UInt32 = uint32_t;
+	using UInt64 = uint64_t;
 
 	/**
 	 * @var typedef RNBO::Index RNBO::ParameterIndex

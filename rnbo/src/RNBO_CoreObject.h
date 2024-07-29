@@ -382,7 +382,7 @@ namespace RNBO {
 		 * @param force if true, ensures the dspsetup methods of patcher objects are called
 		 * @return false if called during setPatcher, true otherwise
 		 */
-		bool prepareToProcess(number sampleRate, size_t maxBlockSize, bool force = false);
+		bool prepareToProcess(number sampleRate, Index maxBlockSize, bool force = false);
 
 		/**
 		 * @brief Get the current time (in ms)
