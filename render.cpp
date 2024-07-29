@@ -291,6 +291,7 @@ static void sendOnChange(std::vector<T>& past, std::vector<unsigned int>& parame
 	}
 }
 
+#ifdef BELA_RNBO_USE_TRILL
 template <float (Trill::*multiMethod)(uint8_t), float (Trill::*singleMethod)()>
 static float trillGetTouches(unsigned int c, void*)
 {
@@ -304,6 +305,7 @@ static float trillGetTouches(unsigned int c, void*)
 	} else
 		return (trills[c]->*singleMethod)();
 }
+#endif // BELA_RNBO_USE_TRILL
 
 void render(BelaContext *context, void *userData)
 {
