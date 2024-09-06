@@ -18,6 +18,7 @@
 #include "RNBO_PatcherEventTarget.h"
 #include "RNBO_PatcherStateInterface.h"
 #include "RNBO_List.h"
+#include "RNBO_String.h"
 #include "RNBO_DataRef.h"
 #include "RNBO_Debug.h"
 
