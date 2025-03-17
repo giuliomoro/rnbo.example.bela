@@ -21,7 +21,7 @@ rm -rf rnbo
 cp -r $RNBO_EXPORT/rnbo ./
 rm -rf rnbo/RNBO.cpp rnbo/*.json rnbo/adapters rnbo/src/platforms/nostdlib rnbo/test rnbo/cmake
 git add rnbo
-git commit -m "====Updating rnbo to $VERSION - first step: copy updated rnbo folder" -a
+git commit -m "====Updating rnbo to $VERSION - single step: copy updated rnbo folder" -a
 # git apply -3 --whitespace=fix <(git diff 79be4ed..ea9bc8a rnbo) # original patches
-git apply -3 --whitespace=fix <(git diff f9d70b5ac5c3aa9988a57203da30cb5a6d8bd5da..672d71580c2907fb9fffa2e37ecc2c232a411d23) # patches used for 1.3.2
-git commit -m "====Updating rnbo to $VERSION - second step: apply patches" -a
+#git apply -3 --whitespace=fix <(git diff f9d70b5ac5c3aa9988a57203da30cb5a6d8bd5da..672d71580c2907fb9fffa2e37ecc2c232a411d23) # patches used for 1.3.2
+# git commit -m "====Updating rnbo to $VERSION - second step: apply patches" -a
