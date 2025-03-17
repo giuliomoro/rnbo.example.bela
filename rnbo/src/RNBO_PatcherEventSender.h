@@ -46,6 +46,7 @@ namespace RNBO {
 				case Event::Transport: handleTransportEvent(ev.getTransportEvent()); break;
 				case Event::BeatTime: handleBeatTimeEvent(ev.getBeatTimeEvent()); break;
 				case Event::TimeSignature: handleTimeSignatureEvent(ev.getTimeSignatureEvent()); break;
+				case Event::BBU: handleBBUEvent(ev.getBBUEvent()); break;
 				case Event::Empty:
 				case Event::Clock:
 				case Event::Startup:
@@ -124,6 +125,11 @@ namespace RNBO {
 		void handleTimeSignatureEvent(const TimeSignatureEvent& te) const {
 			PatcherEventTarget* eventTarget = te.getEventTarget() ? te.getEventTarget() : _fallbackTarget;
 			eventTarget->processTimeSignatureEvent(correctTime(te.getTime()), te.getNumerator(), te.getDenominator());
+		}
+
+		void handleBBUEvent(const BBUEvent& be) const {
+			PatcherEventTarget* eventTarget = be.getEventTarget() ? be.getEventTarget() : _fallbackTarget;
+			eventTarget->processBBUEvent(correctTime(be.getTime()), be.getBars(), be.getBeats(), be.getUnits());
 		}
 
 		PatcherEventTarget* _fallbackTarget;

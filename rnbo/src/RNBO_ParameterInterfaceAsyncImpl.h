@@ -2,7 +2,7 @@
 #define RNBOPlugin_ParameterInterfaceAsyncImpl_h
 
 #include "RNBO_ParameterEventQueue.h"
-#include "src/RNBO_Engine.h"
+#include "RNBO_Engine.h"
 
 #ifdef RNBO_DEBUG
 #define RNBO_DRAIN_THRESHOLD 1024
@@ -276,9 +276,10 @@ namespace RNBO {
 					{
 						ParameterEvent pe = ev.getParameterEvent();
 						const auto source = pe.getSource();
+						const auto index = pe.getIndex();
 						if (source == this) {
-							const bool sameValue = pe.getValue() == _parameters[pe.getIndex()];
-							if (!sameValue && source != _lastSource) {
+							const bool sameValue = pe.getValue() == _parameters[index];
+							if (!sameValue && (source != _lastSource || index != _lastIndex)) {
 								updateShadowValue(pe);
 								_handler->handleParameterEvent(pe);
 							}
@@ -288,6 +289,7 @@ namespace RNBO {
 							_handler->handleParameterEvent(pe);
 						}
 						_lastSource = source;
+						_lastIndex = index;
 						break;
 					}
 					case Event::Midi:
@@ -317,6 +319,9 @@ namespace RNBO {
 						break;
 					case Event::Startup:
 						_handler->handleStartupEvent(ev.getStartupEvent());
+						break;
+					case Event::BBU:
+						_handler->handleBBUEvent(ev.getBBUEvent());
 						break;
 					case Event::Empty:
 					case Event::Clock:
@@ -363,6 +368,7 @@ namespace RNBO {
 		MillisecondTime					_minimumParameterChangeNotificationPeriod;
 		MillisecondTime					_lastOutgoingParameterUpdateTime;
 		ParameterInterfaceId			_lastSource;
+		ParameterIndex			_lastIndex = INVALID_INDEX;
 
 #ifdef RNBO_DEBUG
 		short							_drainEventsCounter = 0;

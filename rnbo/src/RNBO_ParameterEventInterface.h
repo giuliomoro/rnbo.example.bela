@@ -133,6 +133,7 @@ namespace RNBO {
 		virtual void handleBeatTimeEvent(const BeatTimeEvent& event) { RNBO_UNUSED(event); }
 		virtual void handleTimeSignatureEvent(const TimeSignatureEvent& event) { RNBO_UNUSED(event); }
 		virtual void handleStartupEvent(const StartupEvent& event) { RNBO_UNUSED(event); }
+		virtual void handleBBUEvent(const BBUEvent& event) { RNBO_UNUSED(event); }
 
 		/**
 		 * @brief Connect this handler class with a ParameterEventInterface

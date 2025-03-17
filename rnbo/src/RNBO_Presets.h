@@ -5,6 +5,9 @@
 #ifndef _RNBO_Presets_H_
 #define _RNBO_Presets_H_
 
+#include "RNBO_Std.h"
+#include "RNBO_PatcherState.h"
+
 #ifdef RNBO_NOSTDLIB
 #define RNBO_NOPRESETS
 #endif
@@ -15,18 +18,18 @@ namespace RNBO {
 	using Preset = PatcherState;
 	using PresetCallback = void(*);
 	using UniquePresetPtr = void*;
+    using PresetPtr = std::shared_ptr<Preset>;
+    using ConstPresetPtr = std::shared_ptr<const Preset>;
 }
 
 #else
-
-#include "RNBO_PatcherState.h"
 
 RNBO_PUSH_DISABLE_WARNINGS
 #include "3rdparty/json/json.hpp"
 RNBO_POP_DISABLE_WARNINGS
 
 #include "RNBO_Utils.h"
-#include "common/RNBO_Debug.h"
+#include "RNBO_Debug.h"
 
 /**
  * @file RNBO_Presets.h
@@ -74,6 +77,12 @@ namespace RNBO {
         PresetPtr preset;
     };
 
+    class DummyPreset : public PatcherState
+    {
+    public:
+        bool isDummy() const override { return true; }
+    };
+
 #ifdef RNBO_NOSTDLIB
 	using UniquePresetPtr = UniquePtr<Preset>;
 #else
@@ -96,8 +105,13 @@ namespace RNBO {
 			const char *key = entry.first.c_str();
 			auto type = entry.second.getType();
 			switch (type) {
-				case ValueHolder::NUMBER: {
-					number value = (number)entry.second;
+				case ValueHolder::FLOAT: {
+					float value = (float)entry.second;
+					json[key] = value;
+					break;
+				}
+				case ValueHolder::DOUBLE: {
+					double value = (double)entry.second;
 					json[key] = value;
 					break;
 				}
@@ -132,8 +146,13 @@ namespace RNBO {
 					}
 					break;
 				}
-				case ValueHolder::INDEX: {
-					Index value = (Index)entry.second;
+				case ValueHolder::UINT32: {
+					UInt32 value = (UInt32)entry.second;
+					json[key] = value;
+					break;
+				}
+				case ValueHolder::UINT64: {
+					UInt64 value = (UInt64)entry.second;
 					json[key] = value;
 					break;
 				}
@@ -229,13 +248,23 @@ namespace RNBO {
 					const char *key = entry.first.c_str();
 					auto type = entry.second.getType();
 					switch (type) {
-						case ValueHolder::NUMBER: {
-							number value = (number)entry.second;
+						case ValueHolder::FLOAT: {
+							float value = (float)entry.second;
 							dst[key] = value;
 							break;
 						}
-						case ValueHolder::INDEX: {
-							Index value = (Index)entry.second;
+						case ValueHolder::DOUBLE: {
+							double value = (double)entry.second;
+							dst[key] = value;
+							break;
+						}
+						case ValueHolder::UINT32: {
+							UInt32 value = (UInt32)entry.second;
+							dst[key] = value;
+							break;
+						}
+						case ValueHolder::UINT64: {
+							UInt64 value = (UInt64)entry.second;
 							dst[key] = value;
 							break;
 						}

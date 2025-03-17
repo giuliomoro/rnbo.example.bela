@@ -376,9 +376,7 @@ namespace RNBO {
 		ProcessLocker lock(this);
 
 		if (!lock.didLock()) {
-			RNBO_ASSERT(false);
-			// return an empty preset
-			PresetPtr preset = std::make_shared<Preset>();
+			PresetPtr preset = std::make_shared<DummyPreset>();
 			return preset;
 		}
 		else {

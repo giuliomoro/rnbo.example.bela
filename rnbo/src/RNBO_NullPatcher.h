@@ -218,6 +218,13 @@ namespace RNBO {
 			RNBO_UNUSED(denominator);
 		}
 
+		void processBBUEvent(MillisecondTime time, number bars, number beats, number units) override {
+			RNBO_UNUSED(time);
+			RNBO_UNUSED(bars);
+			RNBO_UNUSED(beats);
+			RNBO_UNUSED(units);
+		}
+
 		void getState(PatcherStateInterface& state) override {
 			RNBO_UNUSED(state);
 		}

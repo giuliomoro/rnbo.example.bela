@@ -16,7 +16,7 @@ namespace RNBO {
 	static inline void copySignal(SampleValue *dst, const SampleValue * src, size_t size);
 	static inline bool isNaN(number v);
 	static void* allocateArray(size_t count, const char* type);
-	static number rand01();
+	static number globalrandom();
 	static float bitwiseFloat(unsigned long n);
 	static BinOpInt imul(BinOpInt a, BinOpInt b);
 	static number pi01();
@@ -81,11 +81,6 @@ namespace RNBO {
 	}
 
 	#define getArrayValueAtIndex(a, index) a[int(index)]
-
-	static inline number rand01()
-	{
-		return number(rand()) / number(RAND_MAX);
-	}
 
 	static inline float bitwiseFloat(unsigned long n)
 	{
@@ -171,8 +166,9 @@ namespace RNBO {
 
 	// we are expecting an array of exactly 4 values !
 	using XoshiroState = UInt*;
+    using XoshiroStateArray = UInt[4];
 
-#ifdef RNBO_USE_FLOAT32
+#if defined(RNBO_USE_FLOAT32) || defined(RNBO_NO_INT64)
 	static const SampleValue EXP2_NEG23 = exp2f(-23.f);
 
 	// splitmix32 suggested by David Blackman and Sebastiano Vigna as a good seed for xoshiro256+:
@@ -256,6 +252,19 @@ namespace RNBO {
 	}
 #endif	// RNBO_USE_FLOAT32
 
+struct GlobalRandom {
+    GlobalRandom() {
+        xoshiro_reset((SampleValue)systemticks(), state);
+    }
+
+    XoshiroStateArray state = {};
+};
+static GlobalRandom s_globalRandom;
+
+static inline number globalrandom()
+{
+    return number(fabs(xoshiro_next(s_globalRandom.state)));
+}
 
 #define uint32_add(x, y) (UBinOpInt)((UBinOpInt)x + (UBinOpInt)y)
 #define uint32_trunc(x)	((UBinOpInt)((int64_t)(x)))

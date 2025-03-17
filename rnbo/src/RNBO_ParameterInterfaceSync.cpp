@@ -51,6 +51,7 @@ namespace RNBO {
 			event.setTime(currentTime);
 		}
 
+#ifndef RNBO_NOPRESETS
 		if (event.isPresetEvent()) {
 			PresetEvent pe = event.getPresetEvent();
 			if (pe.getType() == PresetEvent::Get) {
@@ -63,6 +64,12 @@ namespace RNBO {
 		else {
 			_engine.scheduleEvent(event);
 		}
+#else
+        if (!event.isPresetEvent()) {
+            _engine.scheduleEvent(event);
+        }
+#endif // RNBO_NOPRESETS
+
 	}
 
 	void ParameterInterfaceSync::drainEvents() {
@@ -144,6 +151,9 @@ namespace RNBO {
 				case Event::Startup:
 					_handler->handleStartupEvent(event.getStartupEvent());
 					break;
+				case Event::BBU:
+					_handler->handleBBUEvent(event.getBBUEvent());
+					break;
 				case Event::Empty:
 				case Event::Clock:
 				case Event::DataRef:
@@ -197,9 +207,11 @@ namespace RNBO {
 	{
 		ParameterInterfaceSync::scheduleEvent(event);
 		
-		_engine.beginProcessDataRefs();
-		_engine.processEventsUntil(event.getTime());
-		_engine.endProcessDataRefs();
+        if (!_engine.hasCurrentEvent()) {
+            _engine.beginProcessDataRefs();
+            _engine.processEventsUntil(event.getTime());
+            _engine.endProcessDataRefs();
+        }
 	}
 
 	void ParameterInterfaceTrigger::setScheduleCallback(ScheduleCallback callback) {

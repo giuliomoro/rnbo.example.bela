@@ -20,9 +20,11 @@ namespace RNBO {
 
 	private:
 
-		void add(const char* key, number val) override { RNBO_UNUSED(key); RNBO_UNUSED(val); }
+		void add(const char* key, float val) override { RNBO_UNUSED(key); RNBO_UNUSED(val); }
+		void add(const char* key, double val) override { RNBO_UNUSED(key); RNBO_UNUSED(val); }
 		void add(const char* key, Int val) override { RNBO_UNUSED(key); RNBO_UNUSED(val); }
-		void add(const char* key, Index val) override { RNBO_UNUSED(key); RNBO_UNUSED(val); }
+		void add(const char* key, UInt32 val) override { RNBO_UNUSED(key); RNBO_UNUSED(val); }
+		void add(const char* key, UInt64 val) override { RNBO_UNUSED(key); RNBO_UNUSED(val); }
 		void add(const char* key, bool val) override { RNBO_UNUSED(key); RNBO_UNUSED(val); }
 		void add(const char* key, ExternalPtr& ext) override { RNBO_UNUSED(key); RNBO_UNUSED(ext); }
 		void add(const char* key, PatcherEventTarget* patcherEventTarget) override { RNBO_UNUSED(key); RNBO_UNUSED(patcherEventTarget); }
@@ -32,9 +34,11 @@ namespace RNBO {
 		void add(const char* key, signal sig) override { RNBO_UNUSED(key); RNBO_UNUSED(sig); }
 		void add(const char* key, const char* str) override { RNBO_UNUSED(key); RNBO_UNUSED(str); }
 
-		number getFloat(const char* key) override { RNBO_UNUSED(key); return number(0); }
+		float getFloat(const char* key) override { RNBO_UNUSED(key); return float(0); }
+		double getDouble(const char* key) override { RNBO_UNUSED(key); return double(0); }
 		Int getInt(const char* key) override { RNBO_UNUSED(key); return Index(0); }
-		Index getIndex(const char* key) override { RNBO_UNUSED(key); return Index(0); }
+		UInt32 getUInt32(const char* key) override { RNBO_UNUSED(key); return UInt32(0); }
+		UInt64 getUInt64(const char* key) override { RNBO_UNUSED(key); return UInt64(0); }
 		bool getBool(const char* key) override { RNBO_UNUSED(key); return Index(0); }
 		ExternalPtr getExternalPtr(const char* key) override { RNBO_UNUSED(key); return nullptr; }
 		PatcherEventTarget* getEventTarget(const char* key) override { RNBO_UNUSED(key); return nullptr; }

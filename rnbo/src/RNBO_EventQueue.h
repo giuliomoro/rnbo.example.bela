@@ -6,6 +6,8 @@
 #ifndef _RNBO_EventQueue_h
 #define _RNBO_EventQueue_h
 
+#include "RNBO_Std.h"
+
 RNBO_PUSH_DISABLE_WARNINGS
 #include "3rdparty/readerwriterqueue/readerwriterqueue.h"
 RNBO_POP_DISABLE_WARNINGS

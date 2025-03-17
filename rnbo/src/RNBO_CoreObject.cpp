@@ -254,7 +254,7 @@ ParameterIndex CoreObject::getNumParameters() const
 	ConstPresetPtr CoreObject::getPresetSync()
 	{
 #ifdef RNBO_NOPRESETS
-		RNBO_ASSERT(false); // not supported without std:lib
+		RNBO_ASSERT(false);
 #else
 		return _engine->getPresetSync();
 #endif

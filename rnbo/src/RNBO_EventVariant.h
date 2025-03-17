@@ -27,6 +27,7 @@
 #include "RNBO_TransportEvent.h"	// start/stop transport
 #include "RNBO_BeatTimeEvent.h"		// set the beattime
 #include "RNBO_TimeSignatureEvent.h"	// set the time signature
+#include "RNBO_BBUEvent.h"			// set the bars beats units
 
 #ifndef RNBO_NOSTDLIB
 // using an API compatible backport of the C++17 std::variant class
@@ -60,7 +61,8 @@ struct Event {
 		BeatTime,
 		TimeSignature,
 		Startup,
-		ParameterBang
+		ParameterBang,
+		BBU
 	};
 };
 
@@ -103,6 +105,7 @@ struct Event {
 			constexpr Event::Type operator()(const TimeSignatureEvent&) const { return Event::TimeSignature; }
 			constexpr Event::Type operator()(const StartupEvent&) const { return Event::Startup; }
 			constexpr Event::Type operator()(const ParameterBangEvent&) const { return Event::ParameterBang; }
+			constexpr Event::Type operator()(const BBUEvent&) const { return Event::BBU; }
 		};
 
 		Event::Type getType() const {
@@ -124,6 +127,7 @@ struct Event {
 		bool isTimeSignatureEvent() const { return getType() == Event::TimeSignature; }
 		bool isStartupEvent() const { return getType() == Event::Startup; }
 		bool isParameterBangEvent() const { return getType() == Event::ParameterBang; }
+		bool isBBUEvent() const { return getType() == Event::BBU; }
 
 		const EmptyEvent& getEmptyEvent() const {
 			return mpark::get<EmptyEvent>(_event);
@@ -183,6 +187,10 @@ struct Event {
 
 		const ParameterBangEvent& getParameterBangEvent() const {
 			return mpark::get<ParameterBangEvent>(_event);
+		}
+
+		const BBUEvent& getBBUEvent() const {
+			return mpark::get<BBUEvent>(_event);
 		}
 
 		bool operator==(const EventVariant& rhs) const {
@@ -246,6 +254,7 @@ struct Event {
 			void operator()(TempoEvent&) const {}
 			void operator()(TransportEvent&) const {}
 			void operator()(StartupEvent&) const {}
+			void operator()(BBUEvent&) const {}
 
 			template <typename T> void operator()(T& event) const { event._eventTarget = _eventTarget; }
 			PatcherEventTarget* _eventTarget = nullptr;
@@ -275,7 +284,8 @@ struct Event {
 			BeatTimeEvent,
 			TimeSignatureEvent,
 			StartupEvent,
-			ParameterBangEvent
+			ParameterBangEvent,
+			BBUEvent
 		>	_event;
 	};
 
@@ -332,6 +342,7 @@ struct Event {
 				case Event::TimeSignature: _timeSignatureEvent = other._timeSignatureEvent; break;
 				case Event::Startup: _startupEvent = other._startupEvent; break;
 				case Event::ParameterBang: _parameterBangEvent = other._parameterBangEvent; break;
+				case Event::BBU: _bbuEvent = other._bbuEvent; break;
 				// default: // no default case to ensure all cases
 			}
 
@@ -373,6 +384,7 @@ struct Event {
 					case Event::TimeSignature: _timeSignatureEvent = other._timeSignatureEvent; break;
 					case Event::Startup: _startupEvent = other._startupEvent; break;
 					case Event::ParameterBang: _parameterBangEvent = other._parameterBangEvent; break;
+					case Event::BBU: _bbuEvent = other._bbuEvent; break;
 					// default: // no default case to ensure all cases
 				}
 			}
@@ -403,6 +415,7 @@ struct Event {
 				case Event::TimeSignature: _timeSignatureEvent = other._timeSignatureEvent; break;
 				case Event::Startup: _startupEvent = other._startupEvent; break;
 				case Event::ParameterBang: _parameterBangEvent = other._parameterBangEvent; break;
+				case Event::BBU: _bbuEvent = other._bbuEvent; break;
 				// default: // no default case to ensure all cases
 			}
 			_eventType = other._eventType;
@@ -435,6 +448,7 @@ struct Event {
 					case Event::TimeSignature: _timeSignatureEvent = std::move(other._timeSignatureEvent); break;
 					case Event::Startup: _startupEvent = std::move(other._startupEvent); break;
 					case Event::ParameterBang: _parameterBangEvent = std::move(other._parameterBangEvent); break;
+					case Event::BBU: _bbuEvent = std::move(other._bbuEvent); break;
 				}
 
 				_eventType = other._eventType;
@@ -695,25 +709,7 @@ struct Event {
 			return *this;
 		}
 
-		EventVariant(const TimeSignatureEvent& timeSignatureEvent)
-		: _eventType(Event::TimeSignature)
-		{
-			_timeSignatureEvent = timeSignatureEvent;
-		}
 
-		EventVariant& operator=(TimeSignatureEvent timeSignatureEvent)
-		{
-			if (_eventType != Event::TimeSignature)
-			{
-				this->~EventVariant();
-				new (this) EventVariant(timeSignatureEvent);
-			}
-			else
-			{
-				_timeSignatureEvent = timeSignatureEvent;
-			}
-			return *this;
-		}
 
 
 		EventVariant(const StartupEvent& startupEvent)
@@ -756,6 +752,26 @@ struct Event {
 			return *this;
 		}
 
+		EventVariant(const BBUEvent& bbuEvent)
+		: _eventType(Event::BBU)
+		{
+			_bbuEvent = bbuEvent;
+		}
+
+		EventVariant& operator=(BBUEvent bbuEvent)
+		{
+			if (_eventType != Event::BBU)
+			{
+				this->~EventVariant();
+				new (this) EventVariant(bbuEvent);
+			}
+			else
+			{
+				_bbuEvent = bbuEvent;
+			}
+			return *this;
+		}
+
 		Event::Type getType() const { return _eventType; }
 
 		bool isEmptyEvent() const { return getType() == Event::Empty; }
@@ -773,6 +789,7 @@ struct Event {
 		bool isTimeSignatureEvent() const { return getType() == Event::TimeSignature; }
 		bool isStartupEvent() const { return getType() == Event::Startup; }
 		bool isParameterBangEvent() const { return getType() == Event::ParameterBang; }
+		bool isBBUEvent() const { return getType() == Event::BBU; }
 
 		const EmptyEvent& getEmptyEvent() const {
 			RNBO_ASSERT(isEmptyEvent())
@@ -849,6 +866,11 @@ struct Event {
 			return _parameterBangEvent;
 		}
 
+		const BBUEvent& getBBUEvent() const {
+			RNBO_ASSERT(isBBUEvent())
+			return _bbuEvent;
+		}
+
 		bool operator==(const EventVariant& rhs) const {
 			if (_eventType != rhs._eventType) return false;
 
@@ -868,6 +890,7 @@ struct Event {
 				case Event::TimeSignature: return _timeSignatureEvent == rhs._timeSignatureEvent; break;
 				case Event::Startup: return _startupEvent == rhs._startupEvent; break;
 				case Event::ParameterBang: return _parameterBangEvent == rhs._parameterBangEvent; break;
+				case Event::BBU: return _bbuEvent == rhs._bbuEvent; break;
 				// default: // no default case to ensure all cases
 			}
 			return false;
@@ -890,6 +913,7 @@ struct Event {
 				case Event::TimeSignature: return _timeSignatureEvent.getTime(); break;
 				case Event::Startup: return _startupEvent.getTime(); break;
 				case Event::ParameterBang: return _parameterBangEvent.getTime(); break;
+				case Event::BBU: return _bbuEvent.getTime(); break;
 				// default: // no default case to ensure all cases
 			}
 			return 0;
@@ -912,6 +936,7 @@ struct Event {
 				case Event::TimeSignature: return _timeSignatureEvent.getEventTarget(); break;
 				case Event::Startup: return _startupEvent.getEventTarget(); break;
 				case Event::ParameterBang: return _parameterBangEvent.getEventTarget(); break;
+				case Event::BBU: return _bbuEvent.getEventTarget(); break;
 				// default: // no default case to ensure all cases
 			}
 			return nullptr;
@@ -935,6 +960,7 @@ struct Event {
 				case Event::TimeSignature: return _timeSignatureEvent.dumpEvent(); break;
 				case Event::Startup: return _startupEvent.dumpEvent(); break;
 				case Event::ParameterBang: return _parameterBangEvent.dumpEvent(); break;
+				case Event::BBU: return _bbuEvent.dumpEvent(); break;
 				// default: // no default case to ensure all cases
 			}
 		}
@@ -956,6 +982,7 @@ struct Event {
 				case Event::TimeSignature: _timeSignatureEvent.setTime(time); break;
 				case Event::Startup: _startupEvent.setTime(time); break;
 				case Event::ParameterBang: _parameterBangEvent.setTime(time); break;
+				case Event::BBU: _bbuEvent.setTime(time); break;
 				// default: // no default case to ensure all cases
 			}
 
@@ -1004,6 +1031,7 @@ struct Event {
 			TimeSignatureEvent			_timeSignatureEvent;
 			StartupEvent				_startupEvent;
 			ParameterBangEvent			_parameterBangEvent;
+			BBUEvent					_bbuEvent;
 		};
 
 		void setType(Event::Type newType) { _eventType = newType; }

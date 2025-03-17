@@ -33,6 +33,7 @@ namespace RNBO {
 		virtual void processTransportEvent(MillisecondTime, TransportState) {}
 		virtual void processBeatTimeEvent(MillisecondTime, BeatTime) {}
 		virtual void processTimeSignatureEvent(MillisecondTime, int, int) {}
+		virtual void processBBUEvent(MillisecondTime, number, number, number) {};
 		virtual void processParameterBangEvent(ParameterIndex index, MillisecondTime time) = 0;
 
 	protected:
