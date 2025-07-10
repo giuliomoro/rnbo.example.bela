@@ -196,7 +196,7 @@ bool setup(BelaContext *context, void *userData)
 #ifdef BELA_RNBO_USE_TRILL
 	parametersFromTrillLocation.resize(std::min(parametersFromTrillLocation.size(), trills.size()));
 	parametersFromTrillSize.resize(std::min(parametersFromTrillSize.size(), trills.size()));
-	parametersFromTrillChannels.resize(trills.size() ? trills[0].rawData.size());
+	parametersFromTrillChannels.resize(trills.size() ? trills[0]->rawData.size() : 0);
 #endif // BELA_RNBO_USE_TRILL
 	unsigned int hiddenParameters = 0;
 	printf("Available parameters: %u\n", rnbo->getNumParameters());
@@ -316,7 +316,7 @@ void render(BelaContext *context, void *userData)
 #ifdef BELA_RNBO_USE_TRILL
 	sendOnChange(trillLocationParametersPast, parametersFromTrillLocation, [](unsigned int c, void*) -> float { return trills[c]->compoundTouchLocation(); });
 	sendOnChange(trillSizeParametersPast, parametersFromTrillSize, [](unsigned int c, void*) -> float { return trills[c]->compoundTouchSize(); });
-	sendOnChange(trillChannelsParametersPast, parametersFromChannelslSize, [](unsigned int c, void*) -> float { return trills[0]->rawData[c]; });
+	sendOnChange(trillChannelsParametersPast, parametersFromTrillChannels, [](unsigned int c, void*) -> float { return trills[0]->rawData[c]; });
 #endif // BELA_RNBO_USE_TRILL
 
 	unsigned int maxInChannels = context->audioInChannels + context->analogInChannels - nAnalogParameters;
