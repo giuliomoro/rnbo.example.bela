@@ -8,15 +8,13 @@
 
 #include <memory>
 
+#include "RNBO_Debug.h"
 #include "RNBO_Types.h"
 #include "RNBO_List.h"
-#include "RNBO_PlatformInterface.h"
-#include "RNBO_Logger.h"
-#include "RNBO_Debug.h"
 
-#ifdef RNBO_NOSTDLIB
+#ifdef RNBO_NOSTL
 #define RNBO_NOMESSAGEEVENT // this is necessary until we have our own shared_ptr implementation
-#endif
+#endif // RNBO_NOSTL
 
 
 namespace RNBO {

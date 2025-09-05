@@ -44,7 +44,9 @@ namespace RNBO {
 
 		virtual void dump() {}
 
-		virtual void getState(PatcherStateInterface& state)
+        // extract the current state from a patcher
+        // this will leave the patcher in an UNDEFINED state and most likely unusable
+		virtual void extractState(PatcherStateInterface& state)
 		{
 			RNBO_UNUSED(state);
 		}
@@ -55,8 +57,11 @@ namespace RNBO {
 			// assert(false); // can't use assert in Common
 		}
 
-		virtual void initialize(PatcherStateInterface&)
+        // initialize the patcehr and apply the given state - take care - the state is
+        // in an UNDEFINED state afterwards and not re-usable
+		virtual void initialize(PatcherStateInterface& state)
 		{
+            RNBO_UNUSED(state);
 			// the state will only be used if the Patcher overloads this function
 			initialize();
 		}
@@ -73,15 +78,12 @@ namespace RNBO {
 		virtual Index getMaxBlockSize() const = 0;
 		virtual number getSampleRate() const = 0;
 		virtual bool hasFixedVectorSize() const = 0;
+		virtual MillisecondTime getPatcherTime() const = 0;
+
+	protected:
+
 		virtual void sendParameter(ParameterIndex, bool) {}
-
-		virtual ParameterValue getPolyParameterValue(PatcherInterface**, ParameterIndex index) {
-			return getParameterValue(index);
-		}
-
-		virtual void setPolyParameterValue(PatcherInterface**, ParameterIndex index, ParameterValue v, MillisecondTime time) {
-			setParameterValue(index, v, time);
-		}
+        
 	};
 
 	/**
@@ -100,7 +102,7 @@ namespace RNBO {
 
 } // namespace RNBO
 
-#ifndef RNBO_NOSTDLIB
+#ifndef RNBO_NOSTL
 
 ///@cond INTERNAL
 
@@ -119,7 +121,7 @@ namespace std
 
 ///@endcond INTERNAL
 
-#endif // RNBO_NOSTDLIB
+#endif // RNBO_NOSTL
 
 
 #endif // #ifndef _RNBO_PatcherInterface_H_

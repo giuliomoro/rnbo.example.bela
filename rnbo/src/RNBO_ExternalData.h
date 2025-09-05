@@ -35,45 +35,6 @@ namespace RNBO {
 	using ReleaseCallback = std::function<void(ExternalDataId, char*)>;
 
 	/**
-	 * @brief A DataBuffer that has no type
-	 */
-	struct UntypedDataBuffer : public DataType {
-		UntypedDataBuffer() {
-			type = DataType::Untyped;
-		}
-	};
-
-	static_assert(sizeof(UntypedDataBuffer) == sizeof(DataType), "Do not add any members to the derived class.");
-
-	/**
-	 * @brief A data buffer for 32-bit floating point audio
-	 */
-	struct Float32AudioBuffer : public DataType
-	{
-		Float32AudioBuffer(Index channels, number samplerate) {
-			type = DataType::Float32AudioBuffer;
-			audioBufferInfo.channels = channels;
-			audioBufferInfo.samplerate = samplerate;
-		}
-	};
-
-	static_assert(sizeof(Float32AudioBuffer) == sizeof(DataType), "Do not add any members to the derived class.");
-
-	/**
-	 * @brief A data buffer for 64-bit floating point audio
-	 */
-	struct Float64AudioBuffer : public DataType
-	{
-		Float64AudioBuffer(Index channels, number samplerate) {
-			type = DataType::Float64AudioBuffer;
-			audioBufferInfo.channels = channels;
-			audioBufferInfo.samplerate = samplerate;
-		}
-	};
-
-	static_assert(sizeof(Float64AudioBuffer) == sizeof(DataType), "Do not add any members to the derived class.");
-
-	/**
 	 * @brief A handle to an external data reference
 	 */
 	class ExternalDataRef {
@@ -121,7 +82,7 @@ namespace RNBO {
 
 		void revalidate(DataRefIndex index, DataRef *ref) {
 			RNBO_ASSERT(!isValid());
-			Platform::get()->assertTrue(ref, "ref must be non null");
+			Platform::assertTrue(ref, "ref must be non null");
 
 			if (_callback && _data && _data != ref->getData()) {
 				_callback(getMemoryId(), _data);
@@ -136,7 +97,7 @@ namespace RNBO {
 		}
 
 		void updateDataRef(char* data, size_t sizeInBytes) {
-			Platform::get()->assertTrue(_dataRef, "_dataRef must be non null");
+			Platform::assertTrue(_dataRef, "_dataRef must be non null");
 
 			if (_callback && _dataRef->getData() && data != _dataRef->getData()) {
 				_callback(getMemoryId(), _dataRef->getData());
@@ -147,14 +108,14 @@ namespace RNBO {
 		}
 
 		void updateDataRef(char* data, size_t sizeInBytes, DataType type) {
-			Platform::get()->assertTrue(_dataRef, "_dataRef must be non null");
+			Platform::assertTrue(_dataRef, "_dataRef must be non null");
 
 			updateDataRef(data, sizeInBytes);
 			_dataRef->setType(type);
 		}
 
 		void updateDataRef(char* data, size_t sizeInBytes, ReleaseCallback callback) {
-			Platform::get()->assertTrue(_dataRef, "_dataRef must be non null");
+			Platform::assertTrue(_dataRef, "_dataRef must be non null");
 
 			updateDataRef(data, sizeInBytes);
 			_callback = callback;

@@ -67,7 +67,6 @@ namespace RNBO {
 	MillisecondTime getCurrentTime(h_hostHandle hostHandle);
 	void sendOutlet(h_hostHandle hostHandle, void* sender, OutletIndex index, ParameterValue value, SampleOffset sampleOffset);
 	void consolelog(LogLevel level, const char *message);
-	void getPlatformInterface(void** platformInterface);
 	void *hostFunctionGetter(const char *funcName);
 	void dummyExtFunction(void);
 
@@ -129,12 +128,7 @@ namespace RNBO {
 
 	void consolelog(LogLevel level, const char *message)
 	{
-		console->log(level, message);
-	}
-
-	void getPlatformInterface(void** platformInterface)
-	{
-		*platformInterface = Platform::get();
+		Logger::getInstance().log(level, message);
 	}
 
 	void *hostFunctionGetter(const char *funcName)
@@ -161,8 +155,6 @@ namespace RNBO {
 			rv = reinterpret_cast<void*>(&sendOutlet);
 		} else if (strcmp(funcName, "log") == 0) {
 			rv = reinterpret_cast<void*>(&consolelog);
-		} else if (strcmp(funcName, "getPlatformInterface") == 0) {
-			rv = reinterpret_cast<void*>(&getPlatformInterface);
 		}
 
 		return rv;

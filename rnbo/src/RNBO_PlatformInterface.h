@@ -39,41 +39,6 @@ namespace RNBO {
 	 * allocated with this interface will stay valid during code compilation
 	 * with MCJIT.
 	 */
-	class PlatformInterface;
-
-	using PlatformInterfacePtr = PlatformInterface*;
-
-	/**
-	 * @brief A handler for the PlatformInterface
-	 */
-	class Platform
-	{
-	private:
-
-		static PlatformInterfacePtr& instance()
-		{
-			static PlatformInterface* pInstance = nullptr;
-			return pInstance;
-		}
-
-	public:
-
-		static PlatformInterface* get()
-		{
-			return instance();
-		}
-
-		static void set(PlatformInterface* platformInterface)
-		{
-			PlatformInterfacePtr& theInstance = instance();
-			theInstance = platformInterface;
-		}
-
-	};
-
-	enum class RuntimeError {
-		OutOfRange
-	};
 
 	class PlatformInterface
 	{

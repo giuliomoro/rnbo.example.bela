@@ -33,6 +33,7 @@ namespace RNBO {
 		void add(const char* key, MultiDataRef& dataRef) override { RNBO_UNUSED(key); RNBO_UNUSED(dataRef); }
 		void add(const char* key, signal sig) override { RNBO_UNUSED(key); RNBO_UNUSED(sig); }
 		void add(const char* key, const char* str) override { RNBO_UNUSED(key); RNBO_UNUSED(str); }
+        void add(const char* key, SerializedBuffer& data) override { RNBO_UNUSED(key); RNBO_UNUSED(data); }
 
 		float getFloat(const char* key) override { RNBO_UNUSED(key); return float(0); }
 		double getDouble(const char* key) override { RNBO_UNUSED(key); return double(0); }
@@ -48,6 +49,7 @@ namespace RNBO {
 		MultiDataRef& getMultiDataRef(const char *key) override { RNBO_UNUSED(key); return _multiDataRef; }
 		signal getSignal(const char *key) override { RNBO_UNUSED(key); return nullptr; }
 		const char* getString(const char *key) override { RNBO_UNUSED(key); return ""; }
+        SerializedBuffer& getBuffer(const char *key) override { RNBO_UNUSED(key); return _serializedBuffer; }
 
 		bool containsValue(const char* key) const override { RNBO_UNUSED(key); return false; }
 
@@ -59,6 +61,7 @@ namespace RNBO {
 		list				_list;
 		DataRef				_dataRef;
 		MultiDataRef		_multiDataRef;
+        SerializedBuffer    _serializedBuffer;
 	};
 
 }

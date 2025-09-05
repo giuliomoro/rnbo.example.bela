@@ -16,6 +16,9 @@
 #include "RNBO_PatcherFactory.h"
 #include "RNBO_DynamicPatcherFactory.h"
 
+#include <vector>
+#include <string>
+
 namespace RNBO {
 
 	class DynamicPatcherFactory
@@ -40,7 +43,8 @@ namespace RNBO {
 		DynamicPatcherFactory(const char* name,
                               const char* source,
                               const char* fullPathToRNBOHeaders,
-							  ClangInterface::OLevel oLevel);
+							  ClangInterface::OLevel oLevel,
+							  const std::vector<std::string>* preprocessorDefinitions = nullptr);
 
 		/** call to determine if compilation (done in constructor) was successful 
 		    when not successful createInstance() is expected to return nullptr
@@ -56,16 +60,20 @@ namespace RNBO {
 
 	private:
         PatcherFactoryFunctionPtr getPatcherFactoryFunction();
+		SetLoggerFunctionPtr getSetLoggerFunction();
 
 		void initWithNameAndSource(const char* name,
                                    const char* source,
                                    const char* fullPathToRNBOHeaders,
-								   ClangInterface::OLevel oLevel);
+								   ClangInterface::OLevel oLevel,
+								   const std::vector<std::string>* preprocessorDefinitions);
+
 		static String defaultFullPathToCppSource();
 
 		String _fullPathToCppSource;
 		std::shared_ptr<ClangInterface> _clanger;
 		bool _didCompileSucceed;
+
 	};
 
 } // namespace RNBO

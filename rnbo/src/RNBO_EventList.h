@@ -12,14 +12,12 @@
 #include "RNBO_MidiEvent.h"
 #include <utility>
 
-//#define USE_STD_VECTOR
-
-#ifdef USE_STD_VECTOR
+#ifndef RNBO_NOSTL
 #include <vector>
 #include <algorithm>
 #else
 #include "RNBO_Vector.h"
-#endif
+#endif // RNBO_NOSTL
 
 namespace RNBO {
 
@@ -35,11 +33,11 @@ namespace RNBO {
 	public:
 
 		// first we have some implementation details to get out of the way
-#ifdef USE_STD_VECTOR
+#ifndef RNBO_NOSTL
 		using ListType = std::vector<T>;
 #else
 		using ListType = Vector<T>;
-#endif
+#endif // RNBO_NOSTL
 		using Iterator = typename ListType::iterator;
 		using ConstIterator = typename ListType::const_iterator;
 		using ReverseIterator = typename ListType::reverse_iterator;

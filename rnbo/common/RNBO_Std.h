@@ -58,7 +58,6 @@
 
 #ifndef RNBO_NOSTDLIB
 
-#define USE_STD_VECTOR
 #define __STDC_LIMIT_MACROS
 
 #include <stddef.h>
@@ -74,6 +73,10 @@
 #endif
 
 #else // RNBO_NOSTDLIB
+
+#ifndef RNBO_NOSTL
+#define RNBO_NOSTL
+#endif
 
 // size_t
 #ifdef __APPLE__

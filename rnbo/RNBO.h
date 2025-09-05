@@ -8,11 +8,13 @@
 #ifndef _RNBO_H_
 #define _RNBO_H_
 
+#include "common/RNBO_Platform.h"
 #include "src/RNBO_Config.h"
 #include "common/RNBO_Types.h"
 #include "common/RNBO_ParameterInterface.h"
 #include "common/RNBO_BaseInterface.h"
 #include "common/RNBO_PatcherFactory.h"
+#include "common/RNBO_Logger.h"
 #include "src/RNBO_ParameterEvent.h"
 #include "src/RNBO_MidiEvent.h"
 #include "src/RNBO_DynamicSymbolRegistry.h"

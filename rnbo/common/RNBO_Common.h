@@ -13,7 +13,8 @@
 #ifndef _RNBO_Common_h
 #define _RNBO_Common_h
 
-#include "RNBO_PlatformInterface.h"
+#include "RNBO_Debug.h"
+#include "RNBO_Platform.h"
 #include "RNBO_Types.h"
 #include "RNBO_List.h"
 #include "RNBO_ListHelpers.h"
@@ -32,5 +33,7 @@
 #include "RNBO_PatcherFactory.h"
 #include "RNBO_MIDIHelper.h"
 #include "RNBO_TimeConverter.h"
+#include "RNBO_LoggerImpl.h"
+#include "RNBO_MinimalEngine.h"
 
 #endif // #ifndef _RNBO_Common_h

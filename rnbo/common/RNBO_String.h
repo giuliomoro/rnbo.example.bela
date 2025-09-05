@@ -8,7 +8,7 @@
 #ifndef _RNBO_String_H_
 #define _RNBO_String_H_
 
-#include "RNBO_PlatformInterface.h"
+#include "RNBO_Platform.h"
 
 namespace RNBO {
 
@@ -69,7 +69,7 @@ namespace RNBO {
 		 * @param astr a null-terminated string to append to this String
 		 */
 		void append(const char* astr) {
-			size_t alen = Platform::get()->strlen(astr);
+			size_t alen = Platform::strlen(astr);
 			size_t newlen = alen + _len;
 
 			if (newlen >= _truelen) {
@@ -79,11 +79,11 @@ namespace RNBO {
 				while (newlen >= _truelen)
 					_truelen *= 2;
 				_ptr = new char[_truelen];
-				Platform::get()->memcpy(_ptr, oldptr, _len);
+				Platform::memcpy(_ptr, oldptr, _len);
 				if (oldptr)
 					delete[] oldptr;
 			}
-			Platform::get()->memcpy(_ptr + _len, astr, alen);
+			Platform::memcpy(_ptr + _len, astr, alen);
 			_ptr[newlen] = '\0';
 			_len = newlen;
 		}
@@ -157,7 +157,7 @@ namespace RNBO {
 		 * @return false otherwise
 		 */
 		bool operator==(const String& other) const {
-			return Platform::get()->strcmp(_ptr, other._ptr) == 0;
+			return Platform::strcmp(_ptr, other._ptr) == 0;
 		}
 
 		/**
@@ -168,7 +168,7 @@ namespace RNBO {
 		 * @return false otherwise
 		 */
 		bool operator<(const String& other) const {
-			return (Platform::get()->strcmp(_ptr, other._ptr)) < 0 ? true : false;
+			return (Platform::strcmp(_ptr, other._ptr)) < 0 ? true : false;
 		}
 
 		/**
@@ -179,7 +179,7 @@ namespace RNBO {
 		 * @return false otherwise
 		 */
 		bool operator>(const String& other) const {
-			return (Platform::get()->strcmp(_ptr, other._ptr)) > 0 ? true : false;
+			return (Platform::strcmp(_ptr, other._ptr)) > 0 ? true : false;
 		}
 
 		friend struct StringHasher;

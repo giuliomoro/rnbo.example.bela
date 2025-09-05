@@ -8,7 +8,7 @@
 #ifndef RNBO_Vector_h
 #define RNBO_Vector_h
 
-#ifdef USE_STD_VECTOR
+#ifndef RNBO_NOSTL
 
 #include <vector>
 #include <algorithm>
@@ -17,7 +17,7 @@ namespace RNBO {
 	template <class T> using Vector = std::vector<T>;
 }
 
-#else // USE_STD_VECTOR
+#else // RNBO_NOSTL
 
 #include <utility> // std::move, doesn't require stdlib
 #include <initializer_list>
@@ -807,6 +807,6 @@ namespace RNBO {
 
 #endif // VECTOR_TESTS
 
-#endif // USE_STD_VECTOR
+#endif // RNBO_NOSTL
 
 #endif // RNBO_Vector_h

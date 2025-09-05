@@ -196,7 +196,7 @@ namespace RNBO {
 			_wrappedObject->processBeatTimeEvent(time, beatTime);
 		}
 
-		void processTimeSignatureEvent(MillisecondTime time, int numerator, int denominator) override
+		void processTimeSignatureEvent(MillisecondTime time, Int numerator, Int denominator) override
 		{
 			_wrappedObject->processTimeSignatureEvent(time, numerator, denominator);
 		}
@@ -206,9 +206,9 @@ namespace RNBO {
 			_wrappedObject->processBBUEvent(time, bars, beats, units);
 		}
 
-		void getState(PatcherStateInterface& state) override
+		void extractState(PatcherStateInterface& state) override
 		{
-			_wrappedObject->getState(state);
+			_wrappedObject->extractState(state);
 		}
 
 		DataRefIndex getNumDataRefs() const override
@@ -285,6 +285,10 @@ namespace RNBO {
 			_wrappedObject->setPreset(time, preset);
 		}
 
+		MillisecondTime getPatcherTime() const override {
+			return _wrappedObject->getPatcherTime();
+		}
+
 	private:
 		// c++ creates member objects in the order they are defined
 		// and deletes member objects in the reverse order
@@ -316,25 +320,28 @@ namespace RNBO {
 			src.c_str(),
 			fullPathToRNBOHeaders,
 #ifdef _DEBUG
-			ClangInterface::O0
+			ClangInterface::O0,
 #else
-			ClangInterface::O3
+			ClangInterface::O3,
 #endif
+			nullptr
 		);
 	}
 
 	DynamicPatcherFactory::DynamicPatcherFactory(const char* name,
                                                  const char* source,
                                                  const char* fullPathToRNBOHeaders,
-												 ClangInterface::OLevel oLevel)
+												 ClangInterface::OLevel oLevel,
+												 const std::vector<std::string>* preprocessorDefinitions)
 	{
-		initWithNameAndSource(name, source, fullPathToRNBOHeaders, oLevel);
+		initWithNameAndSource(name, source, fullPathToRNBOHeaders, oLevel, preprocessorDefinitions);
 	}
 
 	void DynamicPatcherFactory::initWithNameAndSource(const char* name,
                                                       const char* source,
                                                       const char* fullPathToRNBOHeaders,
-													  ClangInterface::OLevel oLevel)
+													  ClangInterface::OLevel oLevel,
+													  const std::vector<std::string>* preprocessorDefinitions)
 	{
         _clanger = ClangInterface::create();
 		_didCompileSucceed = false;
@@ -346,6 +353,12 @@ namespace RNBO {
             if (fullPathToRNBOHeaders) {
                 _clanger->addIncludePath(fullPathToRNBOHeaders);
             }
+
+			if (preprocessorDefinitions) {
+				for (auto& def : *preprocessorDefinitions) {
+					_clanger->addPreprocessorDefinition(def);
+				}
+			}
 
             // add any registered symbols
             // upon creating the execution engine we add any symbols
@@ -366,7 +379,7 @@ namespace RNBO {
 #endif
 			if (success) {
 #ifdef _DEBUG
-                RNBO::console->log("compilation successful.");
+                RNBO::Logger::getInstance().log("compilation successful.");
 #endif
 				// let's only call it successful if we can in fact get the patcher factory function
 				// this also force it to do the JIT which we want to happen when we make the factory (on secondary thread)
@@ -408,16 +421,28 @@ namespace RNBO {
 			GetPatcherFactoryFunctionPtr getPatcherFactoryFunction =
 				(GetPatcherFactoryFunctionPtr) _clanger->getFunctionAddress("GetPatcherFactoryFunction");
 			if (!getPatcherFactoryFunction) {
-				console->log("error: GetPatcherFactoryFunction function not found!");
+				Logger::getInstance().log("error: GetPatcherFactoryFunction function not found!");
 			}
 			else {
-				factoryFunction = getPatcherFactoryFunction(Platform::get());
+				factoryFunction = getPatcherFactoryFunction();
 				if (!factoryFunction) {
-					console->log("error: GetPatcherFactoryFunction returned nullptr!");
+					Logger::getInstance().log("error: GetPatcherFactoryFunction returned nullptr!");
 				}
 			}
 		}
 		return factoryFunction;
+	}
+
+	SetLoggerFunctionPtr DynamicPatcherFactory::getSetLoggerFunction()
+	{
+		SetLoggerFunctionPtr funcPtr = nullptr;
+		if (_clanger) {
+			funcPtr = (SetLoggerFunctionPtr) _clanger->getFunctionAddress("SetLogger");
+			if (!funcPtr) {
+				Logger::getInstance().log("error: SetLogger function not found!");
+			}
+		}
+		return funcPtr;
 	}
 
 	UniquePtr<PatcherInterface> DynamicPatcherFactory::createInstance()
@@ -429,6 +454,12 @@ namespace RNBO {
 
 			// the DynamicObjectWrapper now owns the rnboObject and rnboObject should be nullptr (as it was moved into DynamicObjectObjectWrapper)
 			instance = UniquePtr<PatcherInterface>(new DynamicObjectWrapper(_clanger, std::move(rnboObject)));
+
+			// we got an instance, now make sure the Logger is set correctly
+			SetLoggerFunctionPtr setLoggerFunc = getSetLoggerFunction();
+			if (setLoggerFunc) {
+				setLoggerFunc(&Logger::getInstance());
+			}
 		}
 
 		return instance;

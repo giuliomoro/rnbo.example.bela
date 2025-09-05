@@ -17,6 +17,7 @@
 #endif
 
 #include "RNBO_PresetEvent.h"
+#include "RNBO_LoggerImpl.h"
 
 namespace RNBO {
 
@@ -301,7 +302,9 @@ ParameterIndex CoreObject::getNumParameters() const
 #endif	// USE_TEST_FILEWATCHER
 
 #else	// USE_DYNAMIC_COMPILATION
-		PatcherFactoryFunctionPtr factory = GetPatcherFactoryFunction(Platform::get());
+		PatcherFactoryFunctionPtr factory = GetPatcherFactoryFunction();
+		SetLogger(&Logger::getInstance());
+
 		patcher = std::move(factory ? factory() : nullptr);
 #endif	// USE_DYNAMIC_COMPILATION
 

@@ -8,11 +8,9 @@
 
 #include <memory>
 
+#include "RNBO_Debug.h"
 #include "RNBO_Types.h"
 #include "RNBO_List.h"
-#include "RNBO_PlatformInterface.h"
-#include "RNBO_Logger.h"
-#include "RNBO_Debug.h"
 #include "RNBO_Presets.h"
 
 namespace RNBO {

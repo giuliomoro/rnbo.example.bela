@@ -37,6 +37,7 @@ namespace RNBO {
 				case Event::DataRef:
 				case Event::Outlet:
 				case Event::Parameter:
+                case Event::ParameterBang:
 				case Event::Universal:
 				case Event::Message:
 				case Event::Preset:
@@ -45,6 +46,7 @@ namespace RNBO {
 				case Event::BeatTime:
 				case Event::TimeSignature:
 				case Event::Startup:
+                case Event::BBU:
 				default: break;
 			}
 		}

@@ -1,12 +1,12 @@
 //
-//    RNBO_Logger.h
-//    Created: 25 Jan 2016 2:42:32pm
-//    Author:  stb
+//  RNBO_Logger.h
+//  RNBO
 //
+//  Created by Stefan Brunner on 18.04.24.
 //
 
-#ifndef _RNBO_Logger_h_
-#define _RNBO_Logger_h_
+#ifndef RNBO_Logger_h
+#define RNBO_Logger_h
 
 #include "RNBO_Types.h"
 #include "RNBO_String.h"
@@ -14,18 +14,12 @@
 
 namespace RNBO {
 
-class LoggerInterface;
-
-extern "C" LoggerInterface* console;		// enables console->log() usage
-
-// interface class enables binary compatibility from dynamically compiled clang/llvm code
-// templated functions just simplify usage of the interface, but don't really change the class
 /**
  * @private
  */
-class LoggerInterface {
+class Logger {
 public:
-	virtual ~LoggerInterface() {}
+	virtual ~Logger() {}
 	virtual void log(LogLevel level, const char* message) = 0;
 
 	// can send as many args to log() as you like, similar to javascript
@@ -48,6 +42,13 @@ public:
 
 		log(level, message.c_str());
 	}
+
+	// clients can set callback to take over handling of log messages
+	using OutputCallback = void(LogLevel level, const char* message);
+	virtual void setLoggerOutputCallback(OutputCallback*) {}
+	
+	static Logger& getInstance();
+
 private:
 	// implementation details below
 	// necessary in header for templates to work
@@ -61,7 +62,7 @@ private:
 	void appendArgument(String& message, T val)
 	{
 		char buff[N];
-		Platform::get()->toString(buff, N, val);
+		Platform::toString(buff, N, val);
 		message += buff;
 	}
 
@@ -75,6 +76,16 @@ private:
 		}
 	}
 
+    template<typename T, size_t N> void appendArgument(String& message, const listbase<T, N>& l)
+    {
+        for (size_t i = 0; i < l.length; i++) {
+            if (i > 0) {
+                message += " ";
+            }
+            appendArgument(message, l[i]);
+        }
+    }
+
 	/** empty argument handling (required for recursive variadic templates)
 	 */
 	void appendArgsToString(String& message)
@@ -83,7 +94,7 @@ private:
 	}
 
 	/** handle N arguments of any type by recursively working through them
-		and matching them to the type-matched routine above.
+	 and matching them to the type-matched routine above.
 	 */
 	template <typename FIRST_ARG, typename ...REMAINING_ARGS>
 	void appendArgsToString(String& message, FIRST_ARG const& first, REMAINING_ARGS const& ...args)
@@ -97,34 +108,13 @@ private:
 	}
 };
 
+
 /**
- * @private
+	this function will be provided by the generated code
  */
-class Logger : public LoggerInterface {
-public:
 
-	Logger();
-	virtual ~Logger() override;
+using SetLoggerFunctionPtr = void(*)(Logger*);
 
-	static Logger& getInstance();
+} // RNBO
 
-	// platform can set callback to take over handling of log messages
-	using OutputCallback = void(LogLevel level, const char* message);
-	void setLoggerOutputCallback(OutputCallback* callback);
-
-	void log(LogLevel level, const char* message) override
-	{
-		_outputCallback(level, message);
-	}
-
-	// defaultLogOutputFunction
-	static void defaultLogOutputFunction(LogLevel level, const char* message);
-
-private:
-
-	OutputCallback*		_outputCallback;
-};
-
-}
-
-#endif  // _RNBO_Logger_h_
+#endif /* RNBO_Logger_h */

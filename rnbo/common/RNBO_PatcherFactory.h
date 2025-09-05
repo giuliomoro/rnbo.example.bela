@@ -10,7 +10,6 @@
 
 namespace RNBO {
 
-    class PlatformInterface;
 	class PatcherInterface;
 
 	/** The patcher factory is just a function pointer to a function that
@@ -23,12 +22,24 @@ namespace RNBO {
 	 	or a DLL can export the function named GetPatcherFactoryFunction in which case the function
 	 	should have the following signature.
 	*/
-	using GetPatcherFactoryFunctionPtr = PatcherFactoryFunctionPtr(*)(PlatformInterface*);
+	using GetPatcherFactoryFunctionPtr = PatcherFactoryFunctionPtr(*)();
 	
 }  // namespace RNBO
 
+#ifdef RNBO_USEPLATFORMINTERFACE
+
 #ifndef RNBO_NO_PATCHERFACTORY
-extern "C" RNBO::PatcherFactoryFunctionPtr GetPatcherFactoryFunction(RNBO::PlatformInterface*);
+extern "C" RNBO::PatcherFactoryFunctionPtr GetPatcherFactoryFunction();
 #endif
+
+#else
+
+#ifndef RNBO_NO_PATCHERFACTORY
+extern "C" RNBO::PatcherFactoryFunctionPtr GetPatcherFactoryFunction();
+#endif
+
+
+#endif // RNBO_USEPLATFORMINTERFACE
+
 
 #endif // ifndef _RNBO_PatcherFactory_h

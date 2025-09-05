@@ -159,6 +159,7 @@ namespace RNBO {
 				case Event::DataRef:
 				case Event::Outlet:
 				case Event::Universal:
+                case Event::ParameterBang:
 				default:
 					// we are only interested in Parameter and Midi events
 					break;

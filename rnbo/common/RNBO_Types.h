@@ -219,6 +219,7 @@ namespace RNBO {
 	using UBinOpInt = uint32_t;
 
 	static const MillisecondTime RNBOTimeNow = 0;
+    static const MillisecondTime TimeNow = 0;
 
 	/** Valid types of parameters */
 	enum ParameterType
@@ -322,6 +323,16 @@ namespace RNBO {
 	};
 
 	static const MessageInfo NullMessageInfo = { "", MessagePortType::Undefined };
+
+	enum class RuntimeError {
+		OutOfRange,
+		QueueOverflow
+	};
+
+
+struct EXTERNALENGINE {
+	EXTERNALENGINE(void*) {}
+};
 
 // member funs macro as recommended by isocpp.org FAQ
 #define CALL_MEMBER_FN(ptrToObject,ptrToMember)  ((*ptrToObject).*(ptrToMember))

@@ -5,7 +5,7 @@
 #include "RNBO_CMath.h"
 
 #ifndef RNBO_NOSTDLIB
-#include <cmath>
+#include <math.h>
 #include <limits>
 #endif // RNBO_NOSTDLIB
 
@@ -46,7 +46,7 @@ namespace RNBO_Math {
 #ifdef RNBO_NOSTDLIB
 		return x != x;
 #else
-		return std::isnan(x);
+		return isnan(x);
 #endif
 	}
 
@@ -56,7 +56,7 @@ namespace RNBO_Math {
 		const bool isinf = !rnbo_isnan<T>(x) && rnbo_isnan<T>(x - x);
 		return !isinf;
 	#else
-		return std::isfinite(x);
+		return isfinite(x);
 	#endif
 	}
 
@@ -90,7 +90,7 @@ namespace RNBO_Math {
 #endif
 
 #endif
-#endif
+#endif // RNBO_NOSTDLIB
 	}
 
 	template <typename T> inline RNBO::number rnbo_acos(T x) { return ::acos(x); }

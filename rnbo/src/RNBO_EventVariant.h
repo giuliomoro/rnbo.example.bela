@@ -29,11 +29,11 @@
 #include "RNBO_TimeSignatureEvent.h"	// set the time signature
 #include "RNBO_BBUEvent.h"			// set the bars beats units
 
-#ifndef RNBO_NOSTDLIB
+#ifndef RNBO_NOSTL
 // using an API compatible backport of the C++17 std::variant class
 #include "3rdparty/MPark_variant/variant.hpp"
 
-#endif // RNBO_NOSTDLIB
+#endif // RNBO_NOSTL
 
 namespace RNBO {
 
@@ -66,7 +66,7 @@ struct Event {
 	};
 };
 
-#ifndef RNBO_NOSTDLIB
+#ifndef RNBO_NOSTL
 
     /**
      * @private
@@ -1038,7 +1038,7 @@ struct Event {
 
 	};
 
-#endif // RNBO_NOSTDLIB
+#endif // RNBO_NOSTL
 
 } // namespace RNBO
 

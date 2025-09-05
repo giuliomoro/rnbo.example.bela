@@ -30,7 +30,7 @@ namespace RNBO {
 		{
 		}
 
-		TimeSignatureEvent(MillisecondTime eventTime, int numerator, int denominator)
+		TimeSignatureEvent(MillisecondTime eventTime, Int numerator, Int denominator)
 		: _eventTime(eventTime)
 		, _numerator(numerator)
 		, _denominator(denominator)
@@ -68,8 +68,8 @@ namespace RNBO {
 		}
 
 		MillisecondTime getTime() const { return _eventTime; }
-		int getNumerator() const { return _numerator; }
-		int getDenominator() const { return _denominator; }
+		Int getNumerator() const { return _numerator; }
+		Int getDenominator() const { return _denominator; }
 
 		// we will always use the default event target (the top level patcher)
 		PatcherEventTarget* getEventTarget() const { return nullptr; }
@@ -83,8 +83,8 @@ namespace RNBO {
 	protected:
 
 		MillisecondTime		_eventTime;
-		int					_numerator;
-		int					_denominator;
+		Int					_numerator;
+		Int					_denominator;
 
 		friend class EventVariant;
 

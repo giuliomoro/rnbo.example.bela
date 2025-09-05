@@ -14,7 +14,6 @@ namespace RNBO {
 	public:
 		PlatformInterfaceStdLib()
 		{
-			Platform::set(this);
 		}
 
 		~PlatformInterfaceStdLib() override

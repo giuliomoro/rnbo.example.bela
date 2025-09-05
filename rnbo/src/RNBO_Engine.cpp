@@ -117,6 +117,14 @@ namespace RNBO {
 		for (auto pi : _registeredParameterInterfaces) {
 			pi->deactivate();
 		}
+
+        for (auto ref = _externalDataRefMap.begin(); ref != _externalDataRefMap.end();) {
+            auto callback = ref->second->getCallback();
+            if (callback && ref->second->getData()) {
+                callback(ref->second->getMemoryId(), ref->second->getData());
+            }
+            ref = _externalDataRefMap.erase(ref);
+        }
 	}
 
 	bool Engine::setPatcher(UniquePtr<PatcherInterface> patcher) {
@@ -138,7 +146,7 @@ namespace RNBO {
 
 		PatcherState state;
 		// get the old patcher state
-		_patcher->getState(state);
+		_patcher->extractState(state);
 		number previousSampleRate = _patcher->getSampleRate();
 		Index previousBlockSize = _patcher->getMaxBlockSize();
 		// move all scheduledEvents that have event targets to the _currentEventsList

@@ -43,16 +43,13 @@ namespace RNBO {
 	f_host_deleteClockEvents			host_deleteClockEvents = 0;
 	f_host_updateEventTarget			host_updateEventTarget = 0;
 	f_host_log							host_log = 0;
-	f_host_getPlatformInterface			host_getPlatformInterface = 0;
-
-	PlatformInterface* platform;
 
 	/**
 	 * @private
 	 *
 	 * Implement logging through the host
 	 */
-	class ExternalLogger : public LoggerInterface
+	class ExternalLogger : public Logger
 	{
 	public:
 		void log(LogLevel level, const char* message)
@@ -62,7 +59,7 @@ namespace RNBO {
 	};
 
 	ExternalLogger s_logger_instance;
-	LoggerInterface* console = &s_logger_instance;
+	Logger* console = &s_logger_instance;
 
 	/**
 	 * @private
@@ -344,7 +341,6 @@ ParameterValue convertFromNormalizedParameterValue(h_extHandle handle, Index ind
 		host_updateEventTarget = (f_host_updateEventTarget)(*hostFunctionGetter)((char *) "updateEventTarget");
 
 		host_log = (f_host_log)(*hostFunctionGetter)((char *) "log");
-		host_getPlatformInterface = (f_host_getPlatformInterface)(*hostFunctionGetter)((char *) "getPlatformInterface");
 	}
 
 	extern "C" f_getFunction ext_initialize(f_getFunction func)
@@ -357,7 +353,6 @@ ParameterValue convertFromNormalizedParameterValue(h_extHandle handle, Index ind
 		getHostFunctions();
 
 		host_GetInterfaceVersion(&major, &minor);
-		host_getPlatformInterface((void**)&platform);
 
 		if (major != ext_rnbo_major) return nullptr;
 

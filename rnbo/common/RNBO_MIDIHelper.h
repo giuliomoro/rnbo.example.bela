@@ -60,7 +60,7 @@ namespace RNBO {
 		MIDI_NoteState_Sustained = 2
 	};
 
-	static inline int parseMidi(int currentStatus, int byte, int statusbyte)
+	static inline Int parseMidi(Int currentStatus, Int byte, Int statusbyte)
 	{
 		if (byte == 0xF0) {
 			return MIDI_Sysex_Started;

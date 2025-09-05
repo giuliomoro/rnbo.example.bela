@@ -16,7 +16,7 @@ namespace RNBO {
 
 	public:
 
-		virtual ParameterIndex getProbingChannels(MessageTag outletId) const = 0;
+        virtual ParameterIndex getProbingChannels(MessageTag /*outletId*/) const { return 0; }
 	};
 
 } // namespace RNBO

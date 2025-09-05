@@ -258,7 +258,7 @@ namespace RNBO {
 			}
 		}
 
-		void sendTimeSignatureEvent(int numerator, int denominator) override {
+		void sendTimeSignatureEvent(Int numerator, Int denominator) override {
 			for (auto pi : _activeParameterInterfaces) {
 				pi->pushOutgoingEvent(TimeSignatureEvent(_currentTime, numerator, denominator));
 			}
@@ -311,7 +311,9 @@ namespace RNBO {
 			for (auto pi : _activeParameterInterfaces) {
 				pi->pushDirtyParameters(_currentTime);
                 if (_presetTouched) {
+#ifndef RNBO_NOPRESETS
                     pi->pushOutgoingEvent(PresetEvent(_currentTime, PresetEvent::Touched, nullptr, nullptr));
+#endif
                 }
 				pi->notifyOutgoingEvents();
 			}
@@ -698,11 +700,11 @@ namespace RNBO {
 		// only to be used from audio thread
 		bool							_inAudioProcess;
 
-#ifdef USE_STD_VECTOR
+#ifndef RNBO_NOSTL
 		std::vector<ParameterEventInterfaceImpl*>	_activeParameterInterfaces;
 #else
 		Vector<ParameterEventInterfaceImpl*>		_activeParameterInterfaces;
-#endif
+#endif // RNBO_NOSTL
 
 		PatcherChangedHandler*			_patcherChangedHandler = nullptr;
 		ParamNameHash					_paramNameHash;

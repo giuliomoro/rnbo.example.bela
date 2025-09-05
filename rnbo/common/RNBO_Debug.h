@@ -1,11 +1,25 @@
 #ifndef _RNBO_DEBUG_H_
 #define _RNBO_DEBUG_H_
 
-#include "RNBO_Logger.h"
-
 // See https://github.com/scottt/debugbreak/blob/master/debugbreak.h for inspiration
 
 namespace RNBO {
+
+#if !defined(RNBO_PLATFORM_ASSERT_WARN)
+    #ifdef RNBO_DEBUG
+        #define RNBO_PLATFORM_ASSERT_WARN 0
+    #else
+        #define RNBO_PLATFORM_ASSERT_WARN 1
+    #endif
+#endif
+
+#if !defined(RNBO_PLATFORM_ERROR_WARN)
+    #ifdef RNBO_DEBUG
+        #define RNBO_PLATFORM_ERROR_WARN 0
+    #else
+        #define RNBO_PLATFORM_ERROR_WARN 1
+    #endif
+#endif
 
 #ifndef RNBO_ASSERT
 
@@ -32,8 +46,12 @@ namespace RNBO {
 
 #if defined(_DEBUG) || defined(DEBUG)
 
+namespace Platform {
+    static void printErrorMessage(const char* message);
+}
+
 #define RNBO_ASSERT(condition) \
-if (!(condition)) { console->log("ASSERTION - failed condition: %s\n", RNBO_STR(condition)); RNBODebugBreak; }
+if (!(condition)) { Platform::printErrorMessage("ASSERTION - failed condition: " RNBO_STR(condition) "\n"); RNBODebugBreak; }
 
 #define RNBO_DEBUG 1
 

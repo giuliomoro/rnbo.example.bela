@@ -7,7 +7,6 @@
 #define _RNBO_DATAREF_H_
 
 #include "RNBO_Types.h"
-#include "RNBO_PlatformInterface.h"
 
 namespace RNBO {
 
@@ -45,6 +44,7 @@ namespace RNBO {
 			Untyped,  ///< generic, untyped memory buffer
 			Float32AudioBuffer,  ///< 32-bit float audio buffer
 			Float64AudioBuffer,  ///< 64-bit float audio buffer
+            SampleAudioBuffer,  ///< 64 or 32-bit float audio buffer
 			TypedArray  ///< typed memory buffer
 		} type = Untyped;
 
@@ -62,6 +62,7 @@ namespace RNBO {
 				case TypedArray: return true;
 				case Float32AudioBuffer:
 				case Float64AudioBuffer:
+                case SampleAudioBuffer:
 					return (audioBufferInfo.channels == rhs.audioBufferInfo.channels
 							&& audioBufferInfo.samplerate == rhs.audioBufferInfo.samplerate);
 			}
@@ -108,6 +109,7 @@ namespace RNBO {
 			_internal = other._internal;
 			_index = other._index;
 			_requestedSizeInBytes = other._requestedSizeInBytes;
+			_allocatedSizeInBytes = other._allocatedSizeInBytes;
 			_deAlloc = other._deAlloc;
 
 			// now reset the other one
@@ -143,6 +145,7 @@ namespace RNBO {
 				_internal = other._internal;
 				_index = other._index;
 				_requestedSizeInBytes = other._requestedSizeInBytes;
+				_allocatedSizeInBytes = other._allocatedSizeInBytes;
 
 				// now reset the other one
 				other._data = nullptr;
@@ -151,6 +154,7 @@ namespace RNBO {
 				other._name = nullptr;
 				other._file = nullptr;
 				other._requestedSizeInBytes = 0;
+				other._allocatedSizeInBytes = 0;
 				other._index = -1;
 				other._tag = nullptr;
 			}
@@ -172,6 +176,7 @@ namespace RNBO {
 				_internal = other._internal;
 				_index = other._index;
 				_requestedSizeInBytes = other._requestedSizeInBytes;
+				_allocatedSizeInBytes = other._allocatedSizeInBytes;
 
                 // now reset the other one
                 other._data = nullptr;
@@ -180,6 +185,7 @@ namespace RNBO {
                 other._name = nullptr;
 				other._file = nullptr;
 				other._requestedSizeInBytes = 0;
+				other._allocatedSizeInBytes = 0;
 				other._index = -1;
 				other._tag = nullptr;
             }
@@ -191,16 +197,6 @@ namespace RNBO {
 
 		~DataRef() {
 			freeIfNeeded();
-
-			if (_name != nullptr) {
-				Platform::get()->free(_name);
-			}
-			if (_file != nullptr) {
-				Platform::get()->free(_file);
-			}
-			if (_tag != nullptr) {
-				Platform::get()->free(_tag);
-			}
 		}
 
 		inline DataType getType() const {
@@ -216,10 +212,8 @@ namespace RNBO {
 		}
 
 		void setName(const char *name) {
-			if (_name) Platform::get()->free(_name);
-			size_t len = Platform::get()->strlen(name);
-			_name = static_cast<char *>(Platform::get()->malloc((len + 1) * sizeof(char)));
-			Platform::get()->strcpy(_name, name);
+			if (name && Platform::strlen(name)) _name = name;
+			else _name = nullptr;
 		}
 
 		inline const char *getFile() const {
@@ -227,15 +221,8 @@ namespace RNBO {
 		}
 
 		void setFile(const char *file) {
-			if (_file) Platform::get()->free(_file);
-			if (file) {
-				size_t len = Platform::get()->strlen(file);
-				_file = static_cast<char *>(Platform::get()->malloc((len + 1) * sizeof(char)));
-				Platform::get()->strcpy(_file, file);
-			}
-			else {
-				_file = nullptr;
-			}
+			if (file && Platform::strlen(file)) _file = file;
+			else _file = nullptr;
 		}
 
 		inline char *getData() {
@@ -250,7 +237,7 @@ namespace RNBO {
 			freeIfNeeded();
 
 			_data = data;
-			_sizeInBytes = sizeInBytes;
+			_sizeInBytes = _allocatedSizeInBytes = sizeInBytes;
 			// normally we now hold external data, but in the WASM case
 			// we want to de-allocate
 			_deAlloc = deAlloc;
@@ -282,13 +269,13 @@ namespace RNBO {
 
 		void allocateIfNeeded() {
 			if (_requestedSizeInBytes) {
-				if (_requestedSizeInBytes > _sizeInBytes || !_deAlloc) {
+				if (_requestedSizeInBytes > _allocatedSizeInBytes || !_deAlloc) {
 					auto oldData = _data;
-					_data = static_cast<char *>(Platform::get()->calloc(_requestedSizeInBytes, 1));
+					_data = static_cast<char *>(Platform::calloc(_requestedSizeInBytes, 1));
 					if (_deAlloc && oldData) {
 						// we own the old data, so copy and free it
-						Platform::get()->memcpy(_data, oldData, _sizeInBytes);
-						Platform::get()->free(oldData);
+						Platform::memcpy(_data, oldData, _sizeInBytes);
+						Platform::free(oldData);
 						_wantsFill = false;
 					}
 					else {
@@ -296,10 +283,14 @@ namespace RNBO {
 					}
 					_deAlloc = true;
 
-					_sizeInBytes = _requestedSizeInBytes;
+					_sizeInBytes = _allocatedSizeInBytes = _requestedSizeInBytes;
 				}
 				else {
-					// if we shrank, we do nothing, we just reset  our size to the requested value
+					// zero out padding if we grow
+					if (_requestedSizeInBytes > _sizeInBytes) {
+						Platform::memset(_data + _sizeInBytes, 0, _requestedSizeInBytes - _sizeInBytes);
+					}
+					// if we didn't need to allocate, we just reset our size to the requested value
 					_sizeInBytes = _requestedSizeInBytes;
 				}
 			}
@@ -307,7 +298,7 @@ namespace RNBO {
 
 		void freeIfNeeded() {
 			if (_deAlloc && _data != nullptr) {
-				Platform::get()->free(_data);
+				Platform::free(_data);
 				_data = nullptr;
 				_deAlloc = false;
 			}
@@ -326,15 +317,8 @@ namespace RNBO {
 		}
 
 		void setTag(const char *tag) {
-			if (_tag) Platform::get()->free(_tag);
-			if (tag) {
-				size_t len = Platform::get()->strlen(tag);
-				_tag = static_cast<char *>(Platform::get()->malloc((len + 1) * sizeof(char)));
-				Platform::get()->strcpy(_tag, tag);
-			}
-			else {
-				_tag = nullptr;
-			}
+			if (tag && Platform::strlen(tag)) _tag = tag;
+			else _tag = nullptr;
 		}
 
 		void setInternal(bool value) {
@@ -346,7 +330,7 @@ namespace RNBO {
 		}
 
 		void setZero() {
-			Platform::get()->memset(_data, 0, _sizeInBytes);
+			Platform::memset(_data, 0, _sizeInBytes);
 		}
 
 		void setIndex(DataRefIndex index) {
@@ -358,12 +342,13 @@ namespace RNBO {
 		}
 
 	private:
-		char			*_name = nullptr;
-		char			*_file = nullptr;
-		char			*_tag = nullptr;
+		const char*		_name = nullptr;
+		const char*		_file = nullptr;
+		const char*		_tag = nullptr;
 
 		size_t			_sizeInBytes = 0;
 		size_t			_requestedSizeInBytes = 0;
+		size_t			_allocatedSizeInBytes = 0;
 		char			*_data = nullptr;
 		bool			_touched = false;
 		bool			_deAlloc = false;
@@ -377,8 +362,7 @@ namespace RNBO {
 	// set the name of the DataRef, this is needed for Javascript and C to be similar
 	// might go away in the future
 	ATTRIBUTE_UNUSED
-	static inline DataRef initDataRef(const char *name, bool internal, const char* file, const char* tag) {
-		DataRef ref;
+	static inline DataRef& initDataRef(DataRef& ref, const char *name, bool internal, const char* file, const char* tag) {
 		ref.setName(name);
 		ref.setInternal(internal);
 		ref.setFile(file);
@@ -395,7 +379,7 @@ namespace RNBO {
 		template<typename... Ts> MultiDataRef(Ts & ... args)
 		: _count(sizeof ... (args))
 		{
-			_refs = static_cast<DataRef**>(Platform::get()->malloc(_count * sizeof(DataRef *)));
+			_refs = static_cast<DataRef**>(Platform::malloc(_count * sizeof(DataRef *)));
 			DataRef* refs[sizeof...(args)] = {static_cast<DataRef*>(&args)...};
 			for (size_t i = 0; i < _count; i++) {
 				_refs[i] = refs[i];
@@ -449,7 +433,7 @@ namespace RNBO {
 
 		~MultiDataRef() {
 			if (_refs) {
-				Platform::get()->free(_refs);
+				Platform::free(_refs);
 			}
 		}
 
@@ -466,6 +450,10 @@ namespace RNBO {
 		DataRef& getCurrent() const {
 			return *_refs[_current];
 		}
+
+        DataRefIndex getCurrentIndex() const {
+            return _current;
+        }
 
 		void setIndex(DataRefIndex index) {
 			_index = index;
@@ -495,7 +483,7 @@ namespace RNBO {
 	public:
 		DataView(DR& dataRef)
 		: _usage(0)
-		, _dataRef(dataRef)
+		, _dataRef(&dataRef)
 		{
 			updateCachedSize();
 		}
@@ -503,13 +491,21 @@ namespace RNBO {
 		virtual ~DataView() {}
 
 		inline T& operator[](size_t i) {
-			T *values = reinterpret_cast<T*>(_dataRef.getData());
+			T *values = reinterpret_cast<T*>(_dataRef->getData());
 			return values[i];
 		}
 
 		inline T operator[](size_t i) const {
-			T *values = reinterpret_cast<T*>(_dataRef.getData());
+			T *values = reinterpret_cast<T*>(_dataRef->getData());
 			return values[i];
+		}
+
+		DataView* operator->() {
+			return this;
+		}
+
+		const DataView* operator->() const {
+			return this;
 		}
 
 		inline size_t getSize() const {
@@ -517,72 +513,81 @@ namespace RNBO {
 		}
 
 		virtual void updateCachedSize() {
-			_size = _dataRef.getSizeInBytes() / sizeof(T);
+			_size = _dataRef->getSizeInBytes() / sizeof(T);
 		}
 
 		inline DataType getType() const {
-			return _dataRef.getType();
+			return _dataRef->getType();
 		}
 
 		void setType(DataType type) {
-			_dataRef.setType(type);
+			_dataRef->setType(type);
 			updateCachedSize();
 		}
 
 		inline size_t getSizeInBytes() const {
-			return _dataRef.getSizeInBytes();
+			return _dataRef->getSizeInBytes();
 		}
 
 		void setTouched(bool value) {
-			_dataRef.setTouched(value);
+			_dataRef->setTouched(value);
 		}
 
 		bool getTouched() {
-			return _dataRef.getTouched();
+			return _dataRef->getTouched();
 		}
 
 		virtual DataView<T, DR>* allocateIfNeeded() {
-			_dataRef.allocateIfNeeded();
+			_dataRef->allocateIfNeeded();
 			updateCachedSize();
 			return this;
 		}
 
 		void setWantsFill(bool value) {
-			_dataRef.setWantsFill(value);
+			_dataRef->setWantsFill(value);
 		}
 
 		void clear() {
-			_dataRef.setData(nullptr, 0);
+			_dataRef->setData(nullptr, 0);
 		}
 
 		void setZero() {
-			_dataRef.setZero();
+			_dataRef->setZero();
 		}
 
 		DataRefIndex getIndex() const {
-			return _dataRef.getIndex();
+			return _dataRef->getIndex();
 		}
 
 		int			_usage;
+
+		virtual void reInit() {
+			reInit(*_dataRef);
+		}
 
 	protected:
 		// the derived view class has to implement the correct version for its data format
 		void requestSize(size_t size) {
 			size_t sizeInBytes = size * sizeof(T);
-			_dataRef.requestSizeInBytes(sizeInBytes, false);
+			_dataRef->requestSizeInBytes(sizeInBytes, false);
 		}
 
 		// the derive view class has to implement the correct version for its data format
 		virtual DataView<T, DR>* setSize(size_t size) {
 			size_t sizeInBytes = size * sizeof(T);
-			_dataRef.requestSizeInBytes(sizeInBytes, true);
-			_dataRef.allocateIfNeeded();
+			_dataRef->requestSizeInBytes(sizeInBytes, true);
+			_dataRef->allocateIfNeeded();
 			updateCachedSize();
 			return this;
 		}
 
+		void reInit(DR& dataRef) {
+			_dataRef = &dataRef;
+			updateCachedSize();
+		}
+
 		size_t		_size;
-		DR&		_dataRef;
+		DR*		_dataRef;
 	};
 
 	/**
@@ -622,9 +627,11 @@ namespace RNBO {
 
 		void operator=(const DataViewRef<T, U>& other)
 		{
-			other._view->_usage++;
-			freeView();
-			_view = other._view;
+			if (&other != this) {
+				other._view->_usage++;
+				freeView();
+				_view = other._view;
+			}
 		}
 
 		inline T& operator[](size_t i) {
@@ -666,8 +673,7 @@ namespace RNBO {
 		}
 
 		void requestSize(size_t size) {
-			size_t sizeInBytes = size * sizeof(T);
-			DataView<T, DR>::requestSize(sizeInBytes);
+			DataView<T, DR>::requestSize(size);
 		}
 	};
 
@@ -693,6 +699,10 @@ namespace RNBO {
 
 		virtual ~InterleavedAudioBuffer() override {}
 
+        InterleavedAudioBuffer* operator->() {
+            return this;
+        }
+
 		inline T getSample(const size_t channel, const size_t index) const {
 			if (!_audioData) return 0;
 			return _audioData[_channels * index + channel];
@@ -701,7 +711,7 @@ namespace RNBO {
 		inline T getSampleSafe(const long channel, const long index) const {
 			if (!_audioData) return 0;
 			const auto ind = _channels * index + channel;
-			if (ind < 0 || static_cast<size_t>(ind) >= DataView<T, DR>::getSize()) {
+			if (ind < 0 || static_cast<size_t>(ind) >= DataView<T, DR>::getSize() * _channels) {
 				return static_cast<T>(0);
 			}
 			return _audioData[ind];
@@ -753,7 +763,7 @@ namespace RNBO {
 		void updateCachedSize() override {
 			DataType info = DataView<T, DR>::getType();
 			_channels = info.audioBufferInfo.channels;
-			_audioData = reinterpret_cast<T*>(DataView<T, DR>::_dataRef.getData());
+			_audioData = reinterpret_cast<T*>(DataView<T, DR>::_dataRef->getData());
 			DataView<T, DR>::_size = _channels ? (DataView<T, DR>::getSizeInBytes() / sizeof(T)) / _channels : 0;
 		}
 
@@ -767,7 +777,7 @@ namespace RNBO {
 
 				// update local cache
 				_channels = channels;
-				_audioData = reinterpret_cast<T*>(DataView<T, DR>::_dataRef.getData());
+				_audioData = reinterpret_cast<T*>(DataView<T, DR>::_dataRef->getData());
 
 				// we might want to implement preserving the data in the future
 				DataView<T, DR>::clear();
@@ -793,6 +803,10 @@ namespace RNBO {
 
 			return this;
 		}
+
+        DataRefIndex getCurrentIndex() const {
+            return 0;
+        }
 
 	private:
 		size_t	_requestedChannels = 0;
@@ -859,6 +873,35 @@ namespace RNBO {
 
 	using Float64BufferRef = DataViewRef<double, Float64Buffer>;
 
+
+    /**
+     * @private
+     */
+    class SampleBuffer : public InterleavedAudioBuffer<SampleValue, DataRef>
+    {
+    public:
+        SampleBuffer(DataRef& dataRef)
+        : InterleavedAudioBuffer<SampleValue, DataRef>(dataRef, DataType::SampleAudioBuffer)
+        {}
+
+        virtual SampleBuffer* allocateIfNeeded() {
+            InterleavedAudioBuffer<SampleValue, DataRef>::allocateIfNeeded();
+            return this;
+        }
+
+        virtual SampleBuffer* setChannels(size_t channels) {
+            InterleavedAudioBuffer<SampleValue, DataRef>::setChannels(channels);
+            return this;
+        }
+
+        virtual SampleBuffer* setSize(size_t size) {
+            InterleavedAudioBuffer<SampleValue, DataRef>::setSize(size);
+            return this;
+        }
+    };
+
+    using SampleBufferRef = DataViewRef<SampleValue, SampleBuffer>;
+
 	/**
 	 * @private
 	 *
@@ -873,9 +916,9 @@ namespace RNBO {
 	template <typename T> class MultiBuffer : public InterleavedAudioBuffer<T, DataRef>
 	{
 	public:
-		MultiBuffer(MultiDataRef& dataRef, DataType::Type type)
-		: InterleavedAudioBuffer<T, DataRef>(dataRef.getCurrent(), type)
-		, _multiRef(dataRef)
+		MultiBuffer(MultiDataRef& multiRef, DataType::Type type)
+		: InterleavedAudioBuffer<T, DataRef>(multiRef.getCurrent(), type)
+		, _multiRef(multiRef)
 		{}
 
 		void setCurrent(DataRefIndex current) {
@@ -885,6 +928,15 @@ namespace RNBO {
 		DataRefIndex getIndex() const {
 			return _multiRef.getIndex();
 		}
+
+		void reInit() override {
+			InterleavedAudioBuffer<T, DataRef>::reInit(_multiRef.getCurrent());
+		}
+
+        DataRefIndex getCurrentIndex() const {
+            return _multiRef.getCurrentIndex();
+        }
+
 	private:
 		MultiDataRef&	_multiRef;
 	};
@@ -951,6 +1003,45 @@ namespace RNBO {
 
 	using UInt8BufferRef = DataViewRef<uint8_t, UInt8Buffer>;
 
+    /**
+     * @brief A DataBuffer that has no type
+     */
+    struct UntypedDataBuffer : public DataType {
+        UntypedDataBuffer() {
+            type = DataType::Untyped;
+        }
+    };
+
+    static_assert(sizeof(UntypedDataBuffer) == sizeof(DataType), "Do not add any members to the derived class.");
+
+    /**
+     * @brief A data buffer for 32-bit floating point audio
+     */
+    struct Float32AudioBuffer : public DataType
+    {
+        Float32AudioBuffer(Index channels, number samplerate) {
+            type = DataType::Float32AudioBuffer;
+            audioBufferInfo.channels = channels;
+            audioBufferInfo.samplerate = samplerate;
+        }
+    };
+
+    static_assert(sizeof(Float32AudioBuffer) == sizeof(DataType), "Do not add any members to the derived class.");
+
+    /**
+     * @brief A data buffer for 64-bit floating point audio
+     */
+    struct Float64AudioBuffer : public DataType
+    {
+        Float64AudioBuffer(Index channels, number samplerate) {
+            type = DataType::Float64AudioBuffer;
+            audioBufferInfo.channels = channels;
+            audioBufferInfo.samplerate = samplerate;
+        }
+    };
+
+    static_assert(sizeof(Float64AudioBuffer) == sizeof(DataType), "Do not add any members to the derived class.");
+
 	/**
 	 * @private
 	 */
@@ -961,6 +1052,7 @@ namespace RNBO {
 	}
 	template<typename T> void updateMultiRef(T, Float32BufferRef&, DataRefIndex) {}
 	template<typename T> void updateMultiRef(T, Float64BufferRef&, DataRefIndex) {}
+    template<typename T> void updateMultiRef(T, SampleBufferRef&, DataRefIndex) {}
 
 	template<class T, typename U> void updateDataRef(T patcher, U& ref)
 	{
@@ -972,6 +1064,75 @@ namespace RNBO {
 		ref.resetRequestedSizeInByte();
 		return ref;
 	}
+
+	template<typename T, typename U> T& reInitDataView(T& bufferRef, U&) {
+		bufferRef->reInit();
+		return bufferRef;
+	}
+
+    struct SerializedBuffer {
+        SerializedBuffer() {}
+
+        SerializedBuffer(const DataRef& ref) {
+            type = ref.getType();
+            if (type.type == DataType::SampleAudioBuffer) {
+                if (sizeof(SampleValue) == sizeof(float)) {
+                    type.type = DataType::Float32AudioBuffer;
+                }
+                else {
+                    type.type = DataType::Float64AudioBuffer;
+                }
+            }
+            sizeInBytes = ref.getSizeInBytes();
+            data = (uint8_t *)Platform::malloc(sizeInBytes);
+            Platform::memcpy(data, ref.getData(), sizeInBytes);
+        }
+
+        ~SerializedBuffer() {
+            if (data) {
+                free(data);
+                data = nullptr;
+            }
+        }
+
+        SerializedBuffer(SerializedBuffer&& other)
+        {
+            type = other.type;
+            sizeInBytes = other.sizeInBytes;
+            data = other.data;
+
+            other.data = nullptr;
+            other.sizeInBytes = 0;
+            other.type = DataType();
+        }
+
+        // disable copy constructors for development purposes
+        SerializedBuffer (const SerializedBuffer& other) {
+            type = other.type;
+            sizeInBytes = other.sizeInBytes;
+            data = (uint8_t*)Platform::malloc(sizeInBytes);
+            Platform::memcpy(data, other.data, sizeInBytes);
+        }
+
+        SerializedBuffer& operator= (const SerializedBuffer&) = delete;
+
+        DataType    type;
+        size_t      sizeInBytes = 0;
+        uint8_t*    data = nullptr;
+    };
+
+    ATTRIBUTE_UNUSED
+    static SerializedBuffer serializeBuffer(const DataRef& ref) {
+        return SerializedBuffer(ref);
+    }
+
+    template<class T> void deserializeBuffer(T patcher, DataRef& dst, const SerializedBuffer& src) {
+        char* data = (char *)Platform::malloc(src.sizeInBytes);
+        Platform::memcpy(data, src.data, src.sizeInBytes);
+        dst.setData(data, src.sizeInBytes, true);
+        dst.setType(src.type);
+        patcher->getEngine()->sendDataRefUpdated(dst->getIndex());
+    }
 
 } // namespace RNBO
 

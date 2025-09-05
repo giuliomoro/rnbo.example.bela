@@ -51,7 +51,7 @@ namespace RNBO {
 
 		T& operator[](size_t n) {
 			if (n >= N) {
-				Platform::get()->errorOrDefault(RuntimeError::OutOfRange, "array index out of range", false /*unused*/);
+				Platform::errorOrDefault(RuntimeError::OutOfRange, "array index out of range", false /*unused*/);
 				_dummy = {};
 				return _dummy;
 			}
@@ -59,7 +59,7 @@ namespace RNBO {
 		}
 		const T& operator[](size_t n) const {
 			if (n >= N) {
-				Platform::get()->errorOrDefault(RuntimeError::OutOfRange, "array index out of range", false /*unused*/);
+				Platform::errorOrDefault(RuntimeError::OutOfRange, "array index out of range", false /*unused*/);
 				return _dummy;
 			}
 			return _values[n];
@@ -79,6 +79,21 @@ namespace RNBO {
 		T _values[N ? N : 1] = {};
 		T _dummy = {};
 	};
+
+
+    template<typename T, size_t FIXED>
+    template<typename TA, size_t NA>
+    listbase<T, FIXED>::listbase(const array<TA, NA>& arr)
+    : length(NA, *this)
+    , _values(nullptr)
+    , _allocatedLength(FIXED)
+    {
+        allocate(0, length, false);
+        for (size_t i = 0; i < NA; i++) {
+            (*this)[i] = arr[i];
+        }
+    }
+
 
 } // namespace RNBO
 

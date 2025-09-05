@@ -33,7 +33,7 @@ namespace RNBOUnitTests {
 
 //forward decl
 namespace RNBO {
-	extern "C" PatcherFactoryFunctionPtr rnbomaticFactoryFunction(PlatformInterface* platformInterface);
+	extern "C" PatcherFactoryFunctionPtr rnbomaticFactoryFunction();
 }
 
 namespace RNBOPresetTests {
@@ -61,8 +61,8 @@ namespace RNBOPresetTests {
 				expectEquals(info.min, 0.0);
 				Handler handler;
 
-
-				CoreObject core(UniquePtr<PatcherInterface>(rnbomaticFactoryFunction(Platform::get())()));
+				UniquePtr<PatcherInterface> patcher(rnbomaticFactoryFunction()());
+				CoreObject core(std::move(patcher));
 
 				expectNotEquals(core.getNumParameters(), (RNBO::ParameterIndex)0);
 

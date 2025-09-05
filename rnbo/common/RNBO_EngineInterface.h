@@ -28,8 +28,8 @@ namespace RNBO {
 
 	public:
 
-		virtual void scheduleClockEvent(EventTarget* eventTarget, ClockId clockIndex, MillisecondTime delay) = 0;
-		virtual void scheduleClockEventWithValue(EventTarget* eventTarget, ClockId clockIndex, MillisecondTime delay, ParameterValue value) = 0;
+		virtual void scheduleClockEvent(EventTarget* eventTarget, ClockId clockIndex, MillisecondTime time) = 0;
+		virtual void scheduleClockEventWithValue(EventTarget* eventTarget, ClockId clockIndex, MillisecondTime time, ParameterValue value) = 0;
 
 		// remove all clock events from the scheduler, optionally executing the clocks
 		virtual void flushClockEvents(EventTarget* eventTarget, ClockId clockIndex, bool execute) = 0;
@@ -48,7 +48,7 @@ namespace RNBO {
 		virtual void sendTempoEvent(Tempo tempo) = 0;
 		virtual void sendTransportEvent(TransportState state) = 0;
 		virtual void sendBeatTimeEvent(BeatTime beattime) = 0;
-		virtual void sendTimeSignatureEvent(int numerator, int denominator) = 0;
+		virtual void sendTimeSignatureEvent(Int numerator, Int denominator) = 0;
 
 		// send a message to the outside world
 		virtual void sendNumMessage(MessageTag tag, MessageTag objectId, number payload, MillisecondTime time) = 0;

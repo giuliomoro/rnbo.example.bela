@@ -5,6 +5,7 @@
 #include "RNBO_Types.h"
 #include "RNBO_ExternalPtr.h"
 #include "RNBO_List.h"
+#include "RNBO_DataRef.h"
 
 namespace RNBO {
 
@@ -54,6 +55,7 @@ namespace RNBO {
 		operator list() { return _state.getList(_key); }
 		operator DataRef&() { return _state.getDataRef(_key); }
 		operator MultiDataRef&() { return _state.getMultiDataRef(_key); }
+        operator SerializedBuffer&() { return _state.getBuffer(_key); }
 
 		U& operator[](Index i) {
 			return _state.getSubStateAt(_key, i);
@@ -103,6 +105,7 @@ namespace RNBO {
 		virtual void add(const char * key, MultiDataRef& dataRef) = 0;
 		virtual void add(const char * key, signal sig) = 0;
 		virtual void add(const char * key, const char* str) = 0;
+        virtual void add(const char* key, SerializedBuffer& data) = 0;
 
 		virtual float getFloat(const char* key) = 0;
 		virtual double getDouble(const char* key) = 0;
@@ -117,6 +120,7 @@ namespace RNBO {
 		virtual MultiDataRef& getMultiDataRef(const char *key) = 0;
 		virtual signal getSignal(const char *key) = 0;
 		virtual const char* getString(const char *key) = 0;
+        virtual SerializedBuffer& getBuffer(const char *key) = 0;
 
 		virtual bool containsValue(const char* key) const = 0;
 	};

@@ -68,7 +68,6 @@ namespace RNBO {
 	typedef void (*f_host_updateEventTarget)(h_hostHandle hostHandle, void *oldTarget, void *newTarget);
 
 	typedef void (*f_host_log)(LogLevel level, const char *message);
-	typedef void (*f_host_getPlatformInterface)(void** platformInterface);
 
 }
 

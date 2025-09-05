@@ -12,6 +12,7 @@
 #include <vector>
 #include <memory>
 
+#include "RNBO_Debug.h"
 #include "RNBO_String.h"
 #include "RNBO_Types.h"
 #include "RNBO_ExternalPtr.h"
@@ -19,7 +20,6 @@
 #include "RNBO_PatcherStateInterface.h"
 #include "RNBO_List.h"
 #include "RNBO_DataRef.h"
-#include "RNBO_Debug.h"
 
 #include "3rdparty/MPark_variant/variant.hpp"
 
@@ -56,7 +56,8 @@ namespace RNBO {
 			UINT32,         ///< @private
 			BOOLEAN,        ///< @private
 			INTVALUE,       ///< @private
-			UINT64        	///< @private
+			UINT64,        	///< @private
+            BUFFER          ///< serialized content of a data buffer
 		};
 
 		/**
@@ -132,9 +133,25 @@ namespace RNBO {
 		ValueHolder(const char* str);
 
 		/**
+		 * @private
+		 */
+		ValueHolder(SerializedBuffer&& data);
+
+		/**
 		 * @brief Construct a value without a type
 		 */
 		ValueHolder();
+
+		~ValueHolder();
+
+		//no copy constructor/assign
+		ValueHolder(const ValueHolder&) = delete;
+		ValueHolder& operator=(ValueHolder&) = delete;
+
+		//default move constructor
+		ValueHolder(ValueHolder&&) = default;
+		//explicit delete move assignment, mpark variant does so it would be implicitly deleted anyway
+		ValueHolder& operator=(ValueHolder&&) = delete;
 
 		explicit operator float() const;
 		explicit operator double() const;
@@ -150,6 +167,7 @@ namespace RNBO {
 		operator DataRef&();
 		operator MultiDataRef&();
 		operator const char*() const;
+		operator SerializedBuffer&();
 
 		operator PatcherState&();
 		PatcherState& operator[](Index i);
@@ -188,7 +206,8 @@ namespace RNBO {
 			MultiDataRef,
 			signal,
 			String,
-			UInt64
+			UInt64,
+            SerializedBuffer
 		> _value;
 	};
 
@@ -198,8 +217,12 @@ namespace RNBO {
 	 * @brief A representation of the RNBO patcher graph
 	 */
 	class PatcherState : public PatcherStateInterface {
-
 	public:
+
+        PatcherState() {}
+
+        PatcherState (const PatcherState&) = delete;
+        PatcherState& operator= (const PatcherState&) = delete;
 
 		using Iterator = typename StateMap::iterator;
 		using ConstIterator = typename StateMap::const_iterator;
@@ -226,18 +249,18 @@ namespace RNBO {
 
 		/**
 		 * @brief Get a substate (e.g. a subpatcher)
-		 * 
-		 * @param key the substate name 
-		 * @return PatcherState& 
+		 *
+		 * @param key the substate name
+		 * @return PatcherState&
 		 */
 		PatcherState& getSubState(const char* key) override;
 
 		/**
 		 * @brief Get a substate (e.g. a subpatcher) from an array of multiple substates
-		 * 
+		 *
 		 * @param key the substate name
 		 * @param i the index of the substate in the array
-		 * @return PatcherState& 
+		 * @return PatcherState&
 		 */
 		PatcherState& getSubStateAt(const char* key, Index i) override;
 
@@ -247,7 +270,7 @@ namespace RNBO {
 		}
 
         virtual bool isDummy() const { return false; }
-        
+
 	private:
 
 		friend class StateHelper<PatcherState>;
@@ -265,6 +288,7 @@ namespace RNBO {
 		void add(const char* key, MultiDataRef& dataRef) override;
 		void add(const char* key, signal sig) override;
 		void add(const char* key, const char* str) override;
+        void add(const char* key, SerializedBuffer& data) override;
 
 		float getFloat(const char* key) override;
 		double getDouble(const char* key) override;
@@ -282,6 +306,7 @@ namespace RNBO {
 		MultiDataRef& getMultiDataRef(const char *key) override;
 		signal getSignal(const char *key) override;
 		const char* getString(const char *key) override;
+        SerializedBuffer& getBuffer(const char *key) override;
 
 		bool containsValue(const char* key) const override;
 

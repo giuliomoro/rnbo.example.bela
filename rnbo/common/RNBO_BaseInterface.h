@@ -18,20 +18,25 @@ namespace RNBO {
 		 */
 		virtual void initialize() {}
 
+		/**
+		 * @return the number of MIDI inputs
+		 */
 		virtual Index getNumMidiInputPorts() const = 0;
+
+		/**
+		 * @return the number of MIDI outputs
+		 */
 		virtual Index getNumMidiOutputPorts() const = 0;
 
+		/**
+		 * @return the number of audio input channels processed by the current patcher
+		 */
 		virtual Index getNumInputChannels() const = 0;
+
+		/**
+		 * @return the number of audio output channels processed by the current patcher
+		 */
 		virtual Index getNumOutputChannels() const = 0;
-
-		// methods from ParameterInterface, they are here for documentation only
-		ParameterIndex getNumParameters() const override = 0;
-		ConstCharPointer getParameterName(ParameterIndex index) const override = 0;
-		ConstCharPointer getParameterId(ParameterIndex index) const override = 0;
-		void getParameterInfo(ParameterIndex index, ParameterInfo* info) const override = 0;
-
-		ParameterValue getParameterValue(ParameterIndex index) override = 0;
-		void setParameterValue(ParameterIndex index, ParameterValue value, MillisecondTime time = RNBOTimeNow) override = 0;
 
 	protected:
 

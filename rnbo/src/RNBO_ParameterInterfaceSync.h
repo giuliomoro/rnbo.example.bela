@@ -3,11 +3,11 @@
 
 #include "RNBO_ParameterEventInterface.h"
 
-#ifdef USE_STD_VECTOR
+#ifndef RNBO_NOSTL
 #include <vector>
 #else
 #include "RNBO_Vector.h"
-#endif
+#endif // RNBO_NOSTL
 
 namespace RNBO {
 
@@ -50,11 +50,11 @@ namespace RNBO {
 
 		EngineCore&					_engine;
 		EventHandler*				_handler;
-#ifdef USE_STD_VECTOR
+#ifndef RNBO_NOSTL
 		std::vector<ParameterValue>	_parameters;
 #else
 		Vector<ParameterValue>		_parameters;
-#endif
+#endif // RNBO_NOSTL
 	};
 
 	/**
