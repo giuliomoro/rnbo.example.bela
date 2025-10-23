@@ -8,7 +8,7 @@
     "-G": "1",
     "-M": "0",
     "user": "",
-    "make": "CPPFLAGS=-I$(PROJECT_DIR)/rnbo/common -I$(PROJECT_DIR)/rnbo -DRNBO_USE_FLOAT32 -Wno-unused-function -Wno-overloaded-virtual",
+    "make": "CPPFLAGS=-DJSON_HAS_CPP_11 -I$(PROJECT_DIR)/rnbo/common -I$(PROJECT_DIR)/rnbo -DRNBO_USE_FLOAT32 -Wno-unused-function -Wno-overloaded-virtual",
     "-X": "0",
     "audioExpander": "0",
     "-Y": "",
