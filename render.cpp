@@ -193,8 +193,8 @@ bool setup(BelaContext *context, void *userData)
 	}
 #endif // BELA_RNBO_LOAD_DEPENDENCIES
 	// map I/Os
-	parametersFromAnalog.resize(std::min(parametersFromAnalog.size(), context->analogInChannels * (context->multiplexerChannels ? context->multiplexerChannels : 1)));
-	parametersFromDigital.resize(std::min(parametersFromDigital.size(), context->digitalChannels));
+	parametersFromAnalog.resize(std::min(parametersFromAnalog.size(), size_t(context->analogInChannels * (context->multiplexerChannels ? context->multiplexerChannels : 1))));
+	parametersFromDigital.resize(std::min(parametersFromDigital.size(), size_t(context->digitalChannels)));
 #ifdef BELA_RNBO_USE_TRILL
 	size_t trillsSize = trillMultitouch ? trills.size() * 5 : trills.size();
 	parametersFromTrillLocation.resize(std::min(parametersFromTrillLocation.size(), trillsSize));
@@ -222,13 +222,13 @@ bool setup(BelaContext *context, void *userData)
 		ssize_t trillSize = findIndex(n, parametersFromTrillSize);
 #endif // BELA_RNBO_USE_TRILL
 		if(analog >= 0)
-			printf(" - controlled by analog in %d", analog);
+			printf(" - controlled by analog in %zd", analog);
 		if(digitalIn >= 0) {
-			printf(" - controlled by digital in %d", digitalIn);
+			printf(" - controlled by digital in %zd", digitalIn);
 			pinMode(context, 0, digitalIn, INPUT);
 		}
 		if(digitalOut >= 0) {
-			printf(" - controlling digital out %d", digitalOut);
+			printf(" - controlling digital out %zd", digitalOut);
 			pinMode(context, 0, digitalOut, OUTPUT);
 		}
 #ifdef BELA_RNBO_USE_TRILL
@@ -258,7 +258,7 @@ bool setup(BelaContext *context, void *userData)
 	{
 		// load presets, see C++ snippets from https://rnbo.cycling74.com/learn/presets-with-snapshots
 		presetList = new RNBO::PresetList(s);
-		printf("Found %d presets\n", presetList->size());
+		printf("Found %zu presets\n", presetList->size());
 		if(presetList->size())
 		{
 			unsigned int idx = 0;
